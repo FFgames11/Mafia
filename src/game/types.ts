@@ -1,12 +1,22 @@
 export type PlayerRole = 'mafia' | 'detective' | 'villager'
 
-export type GamePhase = 'setup' | 'night' | 'day' | 'voting' | 'ended'
+export type GamePhase =
+  | 'setup'
+  | 'role-reveal'
+  | 'mafia'
+  | 'detective'
+  | 'day'
+  | 'discussion'
+  | 'voting'
+  | 'ended'
 
 export type PlayerStatus = 'alive' | 'eliminated'
 
 export type GameMode = 'vs-ai' | 'lobby'
 
 export type PlayerKind = 'human' | 'ai'
+
+export type WinningTeam = 'civilians' | 'mafia'
 
 export interface Player {
   id: number
@@ -16,6 +26,7 @@ export interface Player {
   status: PlayerStatus
   kind: PlayerKind
   isHost: boolean
+  isReady: boolean
 }
 
 export interface GameMaster {
@@ -29,6 +40,14 @@ export interface GameState {
   lobbyCode: string | null
   localPlayerId: number
   hostPlayerId: number
+  humanTeamRole: PlayerRole
   phase: GamePhase
+  round: number
+  pendingEliminationId: number | null
+  lastEliminatedId: number | null
+  investigationTargetId: number | null
+  investigationResult: boolean | null
+  dayStory: string | null
+  winner: WinningTeam | null
   players: Player[]
 }

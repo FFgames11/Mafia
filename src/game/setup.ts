@@ -38,99 +38,180 @@ const aiNames = [
   'Mara Bot',
 ]
 
-function shuffleRoles(roles: PlayerRole[]) {
-  return [...roles].sort(() => Math.random() - 0.5)
+const humanNames = [
+  'Raven Cross',
+  'Silas Vane',
+  'Mira Vale',
+  'Nico Ash',
+  'Iris Black',
+  'Victor Hale',
+  'June Marlow',
+  'Ezra Stone',
+  'Clara Night',
+  'Rowan Graves',
+]
+
+function shuffleItems<T>(items: T[]) {
+  return [...items].sort(() => Math.random() - 0.5)
 }
 
 function createLobbyCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase()
 }
 
-function assignRoles(players: Omit<Player, 'role' | 'status'>[]): Player[] {
-  const roles = shuffleRoles(roleDeck)
+function chooseHumanTeamRole() {
+  const availableTeams: PlayerRole[] = ['mafia', 'detective', 'villager']
 
-  return players.map((player, index) => ({
+  return availableTeams[Math.floor(Math.random() * availableTeams.length)]
+}
+
+function createBotRoleDeck(humanTeamRole: PlayerRole) {
+  let assignedHumanRoles = 0
+
+  return roleDeck.filter((role) => {
+    if (role !== humanTeamRole || assignedHumanRoles >= 2) {
+      return true
+    }
+
+    assignedHumanRoles += 1
+    return false
+  })
+}
+
+function pickHumanNames() {
+  return shuffleItems(humanNames).slice(0, 2)
+}
+
+function pickAvailableHumanName(existingNames: string[]) {
+  return shuffleItems(humanNames).find((name) => !existingNames.includes(name)) ?? 'Mystery Guest'
+}
+
+function assignRoles(
+  players: Omit<Player, 'role' | 'status'>[],
+  humanTeamRole: PlayerRole,
+): Player[] {
+  const botRoles = shuffleItems(createBotRoleDeck(humanTeamRole))
+  let nextBotRole = 0
+
+  return players.map((player) => ({
     ...player,
-    role: roles[index],
+    role: player.kind === 'human' ? humanTeamRole : botRoles[nextBotRole++],
     status: 'alive',
   }))
 }
 
-function createBaseState(mode: GameMode, players: Omit<Player, 'role' | 'status'>[]): GameState {
+function createBaseState(
+  mode: GameMode,
+  players: Omit<Player, 'role' | 'status'>[],
+  humanTeamRole = chooseHumanTeamRole(),
+): GameState {
   return {
     gameMaster: {
       name: 'The Computer',
       description:
-        'Handles role assignment now. Later it can resolve night actions, announce results, and manage voting.',
+        'Keeps the two human players on the same team, assigns bot roles, and will later resolve night actions, announcements, and voting.',
     },
     mode,
     lobbyCode: mode === 'lobby' ? createLobbyCode() : null,
     localPlayerId: 1,
     hostPlayerId: 1,
+    humanTeamRole,
     phase: 'setup',
-    players: assignRoles(players),
+    round: 1,
+    pendingEliminationId: null,
+    lastEliminatedId: null,
+    investigationTargetId: null,
+    investigationResult: null,
+    dayStory: null,
+    winner: null,
+    players: assignRoles(players, humanTeamRole),
+  }
+}
+
+function createHumanPlayer(index: number, name: string) {
+  return {
+    id: index + 1,
+    seat: `Seat ${index + 1}`,
+    name,
+    kind: 'human' as const,
+    isHost: index === 0,
+    isReady: index === 0,
+  }
+}
+
+function createAiSeat(index: number, aiIndex: number) {
+  return {
+    id: index + 1,
+    seat: `Seat ${index + 1}`,
+    name: aiNames[aiIndex] ?? `AI Player ${aiIndex + 1}`,
+    kind: 'ai' as const,
+    isHost: false,
+    isReady: true,
   }
 }
 
 export function createVsAiGameState(): GameState {
-  const players = playerNames.map((_, index) => ({
-    id: index + 1,
-    seat: `Seat ${index + 1}`,
-    name: index === 0 ? 'You' : aiNames[index - 1],
-    kind: index === 0 ? 'human' as const : 'ai' as const,
-    isHost: index === 0,
-  }))
+  const humanPlayerNames = pickHumanNames()
+  const humans = [
+    createHumanPlayer(0, humanPlayerNames[0]),
+    { ...createHumanPlayer(1, humanPlayerNames[1]), isReady: true },
+  ]
+  const bots = playerNames.slice(2).map((_, index) => createAiSeat(index + 2, index))
 
-  return createBaseState('vs-ai', players)
+  return createBaseState('vs-ai', [...humans, ...bots])
 }
 
-export function createLobbyGameState(): GameState {
-  return createBaseState('lobby', [
-    {
-      id: 1,
-      seat: 'Seat 1',
-      name: 'You',
-      kind: 'human',
-      isHost: true,
-    },
-  ])
-}
+export function addHumanPlayer(gameState: GameState): GameState {
+  const humanCount = gameState.players.filter((player) => player.kind === 'human').length
 
-export function addAiPlayer(gameState: GameState): GameState {
-  if (gameState.players.length >= roleDeck.length) {
+  if (humanCount >= 2 || gameState.players.length >= roleDeck.length) {
     return gameState
   }
 
-  const nextId = Math.max(...gameState.players.map((player) => player.id)) + 1
-  const aiIndex = gameState.players.filter((player) => player.kind === 'ai').length
-
   return {
     ...gameState,
-    players: assignRoles([
-      ...gameState.players.map(({ role: _role, status: _status, ...player }) => player),
-      {
-        id: nextId,
-        seat: `Seat ${gameState.players.length + 1}`,
-        name: aiNames[aiIndex] ?? `AI Player ${aiIndex + 1}`,
-        kind: 'ai',
-        isHost: false,
-      },
-    ]),
+    players: assignRoles(
+      [
+        ...gameState.players.map(({ role: _role, status: _status, ...player }) => player),
+        createHumanPlayer(
+          humanCount,
+          pickAvailableHumanName(gameState.players.map((player) => player.name)),
+        ),
+      ],
+      gameState.humanTeamRole,
+    ).sort((first, second) => first.id - second.id),
   }
 }
 
-export function fillLobbyWithAi(gameState: GameState): GameState {
-  let nextState = gameState
+export function createLobbyGameState(): GameState {
+  const humanPlayerNames = pickHumanNames()
+  const host = createHumanPlayer(0, humanPlayerNames[0])
+  const bots = playerNames.slice(2).map((_, index) => createAiSeat(index + 2, index))
 
-  while (nextState.players.length < roleDeck.length) {
-    nextState = addAiPlayer(nextState)
+  return createBaseState('lobby', [host, ...bots])
+}
+
+export function setPlayerReady(
+  gameState: GameState,
+  playerId: number,
+  isReady: boolean,
+): GameState {
+  return {
+    ...gameState,
+    players: gameState.players.map((player) =>
+      player.id === playerId ? { ...player, isReady } : player,
+    ),
   }
-
-  return nextState
 }
 
 export function startGame(gameState: GameState, requestedByPlayerId: number): GameState {
-  const canStart = gameState.hostPlayerId === requestedByPlayerId && gameState.players.length === roleDeck.length
+  const humanCount = gameState.players.filter((player) => player.kind === 'human').length
+  const secondHuman = gameState.players.find((player) => player.kind === 'human' && !player.isHost)
+  const canStart =
+    gameState.hostPlayerId === requestedByPlayerId &&
+    gameState.players.length === roleDeck.length &&
+    humanCount === 2 &&
+    secondHuman?.isReady === true
 
   if (!canStart) {
     return gameState
@@ -138,6 +219,6 @@ export function startGame(gameState: GameState, requestedByPlayerId: number): Ga
 
   return {
     ...gameState,
-    phase: 'night',
+    phase: 'role-reveal',
   }
 }

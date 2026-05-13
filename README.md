@@ -2,11 +2,13 @@
 
 Vue + TypeScript base for a mafia game with the minimum setup:
 
-- 8 human players
+- 2 human players
+- 6 bot players
 - 1 computer Game Master
 - 2 Mafia
 - 2 Detectives
 - 4 Villagers
+- Both human players are always assigned to the same team
 
 ## Run Locally
 
@@ -21,7 +23,8 @@ npm run dev
 - Typed game state in `src/game/types.ts`
 - Initial setup and role assignment in `src/game/setup.ts`
 - Mafia-themed starting board in `src/App.vue`
-- Two setup modes: VS AI and lobby code
+- Two setup modes: 2P VS Bots and lobby code
+- Shared human team assignment: both humans are Mafia, Detectives, or Villagers
 - Host-only start rule
 - AI fill controls for incomplete lobbies
 
@@ -29,7 +32,7 @@ npm run dev
 
 - Add player name entry before role assignment
 - Add real multiplayer networking behind lobby codes
-- Hide roles from other players during setup and lobby waiting
+- Hide bot and opponent information during setup and lobby waiting
 - Add night phase actions for Mafia and Detectives
 - Add day discussion and voting flow
 - Add win-condition checks
