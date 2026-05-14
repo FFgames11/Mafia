@@ -119,6 +119,8 @@ function createBaseState(
     phase: 'setup',
     round: 1,
     seatOrder: assignedPlayers.map((player) => player.id),
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     pendingEliminationId: null,
     sleepAcknowledgedIds: [],
     mafiaVotes: [],
@@ -230,6 +232,8 @@ export function startGame(gameState: GameState, requestedByPlayerId: number): Ga
   return randomizeSeating({
     ...gameState,
     phase: 'role-reveal',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
   })
 }
 

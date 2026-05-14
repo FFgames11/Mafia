@@ -68,6 +68,8 @@ export function advanceToMafiaPhase(gameState: GameState): GameState {
   return {
     ...gameState,
     phase: 'mafia',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     pendingEliminationId: null,
     sleepAcknowledgedIds: [],
     mafiaVotes: [],
@@ -81,10 +83,21 @@ export function advanceToMafiaPhase(gameState: GameState): GameState {
   }
 }
 
+export function advanceToSleepStoryPhase(gameState: GameState): GameState {
+  return {
+    ...gameState,
+    phase: 'sleep-story',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
+  }
+}
+
 export function advanceToIntroPhase(gameState: GameState): GameState {
   return {
     ...gameState,
     phase: 'intro',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     sleepAcknowledgedIds: [],
   }
 }
@@ -93,6 +106,8 @@ export function advanceToSleepPhase(gameState: GameState): GameState {
   return {
     ...gameState,
     phase: 'sleep',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     sleepAcknowledgedIds: [],
   }
 }
@@ -101,6 +116,8 @@ export function advanceToMafiaSleepPhase(gameState: GameState): GameState {
   return {
     ...gameState,
     phase: 'mafia-sleep',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
   }
 }
 
@@ -108,6 +125,8 @@ export function advanceToDetectivePhase(gameState: GameState): GameState {
   return {
     ...gameState,
     phase: 'detective',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
   }
 }
 
@@ -120,6 +139,8 @@ export function advanceToSunrisePhase(gameState: GameState): GameState {
     lastEliminatedId: gameState.pendingEliminationId,
     pendingEliminationId: null,
     dayStory: createDayStory(gameState.round, eliminatedName),
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     phase: 'sunrise' as const,
   }
   const winner = getWinner(nextState)
@@ -131,6 +152,8 @@ export function advanceToDiscussionPhase(gameState: GameState): GameState {
   return prepareDiscussionTurn({
     ...gameState,
     phase: 'discussion',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     discussionSpeakerIndex: 0,
     discussionPromptSpeakerId: null,
     discussionPromptOptions: [],
@@ -142,6 +165,8 @@ export function advanceToVotingPhase(gameState: GameState): GameState {
   return {
     ...gameState,
     phase: 'voting',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     voteChoices: [],
     tiedPlayerIds: [],
     discussionSpeakerIndex: 0,
@@ -177,7 +202,7 @@ export function acknowledgeSleepPhase(gameState: GameState, playerId: number): G
     }
   }
 
-  return advanceToMafiaPhase({
+  return advanceToSleepStoryPhase({
     ...gameState,
     sleepAcknowledgedIds,
   })
@@ -290,6 +315,8 @@ export function chooseDetectiveTarget(
     detectiveVotes,
     investigationTargetId,
     investigationResult: target?.role === 'mafia',
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
   }
 }
 
@@ -322,6 +349,8 @@ export function castVote(gameState: GameState, voterId: number, targetId: number
       ...gameState,
       voteChoices,
       tiedPlayerIds: result.tiedPlayerIds,
+      nextAcknowledgedIds: [],
+      nextAcknowledgements: {},
       phase: 'tie-dialogue',
     }
   }
@@ -331,6 +360,8 @@ export function castVote(gameState: GameState, voterId: number, targetId: number
     voteChoices,
     tiedPlayerIds: [],
     pendingEliminationId: result.winnerId,
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     phase: 'elimination',
   }
 }
@@ -339,6 +370,8 @@ export function restartVoteAfterTie(gameState: GameState): GameState {
   return {
     ...gameState,
     voteChoices: [],
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     phase: 'voting',
   }
 }
@@ -350,6 +383,8 @@ export function finalizeElimination(gameState: GameState): GameState {
     players,
     lastEliminatedId: gameState.pendingEliminationId,
     pendingEliminationId: null,
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
   }
   const winner = getWinner(nextState)
 
@@ -360,6 +395,8 @@ export function finalizeElimination(gameState: GameState): GameState {
   return {
     ...nextState,
     round: gameState.round + 1,
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     sleepAcknowledgedIds: [],
     mafiaVotes: [],
     detectiveVotes: [],

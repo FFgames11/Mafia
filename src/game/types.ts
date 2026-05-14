@@ -5,6 +5,7 @@ export type GamePhase =
   | 'role-reveal'
   | 'intro'
   | 'sleep'
+  | 'sleep-story'
   | 'mafia'
   | 'mafia-sleep'
   | 'detective'
@@ -49,6 +50,8 @@ export interface GameState {
   humanTeamRole: PlayerRole
   phase: GamePhase
   round: number
+  nextAcknowledgedIds: number[]
+  nextAcknowledgements: Record<string, number[]>
   pendingEliminationId: number | null
   sleepAcknowledgedIds: number[]
   mafiaVotes: Array<{

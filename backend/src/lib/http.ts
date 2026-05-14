@@ -3,16 +3,17 @@ import { NextResponse } from 'next/server'
 const allowedOrigins = new Set([
   'http://127.0.0.1:5173',
   'http://localhost:5173',
+  'http://192.168.0.50:5173',
 ])
 
 export function getCorsHeaders(request: Request) {
   const origin = request.headers.get('origin') ?? ''
-  const allowedOrigin = allowedOrigins.has(origin) ? origin : 'http://127.0.0.1:5173'
+  const allowedOrigin = allowedOrigins.has(origin) ? origin : ''
 
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
   }
 }
 

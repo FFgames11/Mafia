@@ -4,7 +4,9 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import storyCycles from './data/story-cycles.json'
 import {
   advanceToIntroPhase,
+  advanceToMafiaPhase,
   advanceToSleepPhase,
+  advanceToSleepStoryPhase,
   advanceToDetectivePhase,
   advanceToDiscussionPhase,
   advanceToSunrisePhase,
@@ -57,9 +59,14 @@ const introAdvanceTimeoutId = ref<number | null>(null)
 const nightAutomationTimeoutId = ref<number | null>(null)
 const botDiscussionTimeoutId = ref<number | null>(null)
 const voteAutomationTimeoutId = ref<number | null>(null)
+const eliminationAutomationTimeoutId = ref<number | null>(null)
 const hasSeenRoleReveal = ref(false)
 const isVoteModalMinimized = ref(true)
 const discussionLogElement = ref<HTMLElement | null>(null)
+const isLocalNextVisible = ref(false)
+const dismissedLocalModalKeys = ref<Set<string>>(new Set())
+const isNextGateAdvanceBusy = ref(false)
+const isSleepGateAdvanceBusy = ref(false)
 
 const roleCounts = computed(() => {
   return gameState.value.players.reduce<Record<PlayerRole, number>>(
@@ -124,6 +131,8 @@ const phaseTitle = computed(() => {
       return 'Intro Story'
     case 'sleep':
       return 'Everyone Falls Asleep'
+    case 'sleep-story':
+      return 'Everyone Is Sleeping'
     case 'mafia':
       return 'Night: Killer'
     case 'mafia-sleep':
@@ -155,6 +164,8 @@ const narrationText = computed(() => {
       return pack.intro
     case 'sleep':
       return pack.sleep
+    case 'sleep-story':
+      return 'The Game Master looks around the quiet table. Everyone is sleeping now, eyes closed, waiting for the night to reveal its secrets.'
     case 'mafia':
       return pack.mafia
     case 'mafia-sleep':
@@ -326,6 +337,36 @@ const hasLocalVoted = computed(() => {
   )
 })
 
+const nextRequiredCount = computed(() => {
+  return gameState.value.players.filter((player) => player.kind === 'human').length
+})
+
+const nextAcknowledgedCount = computed(() => {
+  const acknowledgedIds = getCurrentNextAcknowledgedIds()
+
+  return gameState.value.players.filter((player) => {
+    return player.kind === 'human' && acknowledgedIds.includes(player.id)
+  }).length
+})
+
+const hasLocalNextAcknowledged = computed(() => {
+  return Boolean(
+    localPlayer.value && getCurrentNextAcknowledgedIds().includes(localPlayer.value.id),
+  )
+})
+
+const nextButtonLabel = computed(() => {
+  return `Next ${nextAcknowledgedCount.value}/${nextRequiredCount.value}`
+})
+
+const canShowDiscussionVoteButton = computed(() => {
+  return gameState.value.phase === 'voting' && localPlayer.value?.status === 'alive' && !hasLocalVoted.value
+})
+
+const canOpenVotingFromDiscussion = computed(() => {
+  return isDiscussionComplete.value && localPlayer.value?.status === 'alive'
+})
+
 const discussionOrder = computed(() => {
   const playersById = new Map(gameState.value.players.map((player) => [player.id, player]))
 
@@ -386,8 +427,14 @@ const isDiscussionComplete = computed(() => {
 })
 
 const isStoryModalOpen = computed(() => {
-  return ['intro', 'sleep', 'mafia', 'mafia-sleep', 'detective', 'sunrise'].includes(
-    gameState.value.phase,
+  if (gameState.value.phase === 'sunrise' && gameState.value.lastEliminatedId !== null) {
+    return false
+  }
+
+  return (
+    ['intro', 'sleep', 'sleep-story', 'mafia', 'mafia-sleep', 'detective', 'sunrise'].includes(
+      gameState.value.phase,
+    ) && !isLocalModalDismissed(`story:${gameState.value.phase}:${gameState.value.round}`)
   )
 })
 
@@ -400,11 +447,123 @@ const isVoteModalOpen = computed(() => {
 })
 
 const isVoteResultModalOpen = computed(() => {
-  return gameState.value.phase === 'tie-dialogue' || gameState.value.phase === 'elimination'
+  const key = `vote-result:${gameState.value.phase}:${gameState.value.round}:${gameState.value.voteChoices.length}`
+
+  return (
+    (gameState.value.phase === 'tie-dialogue' || gameState.value.phase === 'elimination') &&
+    (gameState.value.phase !== 'elimination' || !isVoteResultAcknowledged.value) &&
+    !isLocalModalDismissed(key)
+  )
+})
+
+const isVoteResultAcknowledged = computed(() => {
+  const key = `vote-result:${gameState.value.phase}:${gameState.value.round}:${gameState.value.voteChoices.length}`
+  const acknowledgedIds = gameState.value.nextAcknowledgements?.[key] ?? []
+
+  return nextRequiredCount.value > 0 && acknowledgedIds.length >= nextRequiredCount.value
+})
+
+const isVoteEliminationModalOpen = computed(() => {
+  const key = `vote-elimination:${gameState.value.round}:${gameState.value.pendingEliminationId}`
+
+  return (
+    gameState.value.phase === 'elimination' &&
+    gameState.value.pendingEliminationId !== null &&
+    isVoteResultAcknowledged.value &&
+    !isLocalModalDismissed(key)
+  )
 })
 
 const isKillerTargetModalOpen = computed(() => {
-  return gameState.value.phase === 'mafia' && gameState.value.pendingEliminationId === null
+  return (
+    gameState.value.phase === 'mafia' &&
+    gameState.value.pendingEliminationId === null &&
+    canSeeMafiaInfo.value
+  )
+})
+
+const isDetectiveResultModalOpen = computed(() => {
+  const key = `detective-result:${gameState.value.round}:${gameState.value.investigationTargetId}`
+
+  return (
+    gameState.value.phase === 'detective' &&
+    gameState.value.investigationTargetId !== null &&
+    canSeeDetectiveInfo.value &&
+    !isLocalModalDismissed(key)
+  )
+})
+
+const isNightDeathModalOpen = computed(() => {
+  const key = `night-death:${gameState.value.round}:${gameState.value.lastEliminatedId}`
+
+  return (
+    gameState.value.phase === 'sunrise' &&
+    gameState.value.lastEliminatedId !== null &&
+    isNightDeathIntroAcknowledged.value &&
+    !isLocalModalDismissed(key)
+  )
+})
+
+const isNightDeathIntroModalOpen = computed(() => {
+  const key = `night-death-intro:${gameState.value.round}:${gameState.value.lastEliminatedId}`
+
+  return (
+    gameState.value.phase === 'sunrise' &&
+    gameState.value.lastEliminatedId !== null &&
+    !isNightDeathIntroAcknowledged.value &&
+    !isLocalModalDismissed(key)
+  )
+})
+
+const isNightDeathIntroAcknowledged = computed(() => {
+  const key = `night-death-intro:${gameState.value.round}:${gameState.value.lastEliminatedId}`
+  const acknowledgedIds = gameState.value.nextAcknowledgements?.[key] ?? []
+
+  return nextRequiredCount.value > 0 && acknowledgedIds.length >= nextRequiredCount.value
+})
+
+const localNextModalKey = computed(() => {
+  if (gameState.value.phase === 'role-reveal' && !hasSeenRoleReveal.value) {
+    return `role-reveal:${gameState.value.round}`
+  }
+
+  if (
+    ['intro', 'sleep-story', 'mafia', 'mafia-sleep', 'detective'].includes(gameState.value.phase) &&
+    isStoryModalOpen.value
+  ) {
+    return `story:${gameState.value.phase}:${gameState.value.round}`
+  }
+
+  if (isNightDeathIntroModalOpen.value) {
+    return `night-death-intro:${gameState.value.round}:${gameState.value.lastEliminatedId}`
+  }
+
+  if (isNightDeathModalOpen.value) {
+    return `night-death:${gameState.value.round}:${gameState.value.lastEliminatedId}`
+  }
+
+  if (isDetectiveResultModalOpen.value) {
+    return `detective-result:${gameState.value.round}:${gameState.value.investigationTargetId}`
+  }
+
+  if (isVoteResultModalOpen.value && gameState.value.phase === 'elimination') {
+    return `vote-result:${gameState.value.phase}:${gameState.value.round}:${gameState.value.voteChoices.length}`
+  }
+
+  if (isVoteEliminationModalOpen.value) {
+    return `vote-elimination:${gameState.value.round}:${gameState.value.pendingEliminationId}`
+  }
+
+  return null
+})
+
+const isRoleRevealModalOpen = computed(() => {
+  const key = `role-reveal:${gameState.value.round}`
+
+  return (
+    gameState.value.phase === 'role-reveal' &&
+    !isLocalModalDismissed(key)
+  )
 })
 
 const lobbySlots = computed(() => {
@@ -463,6 +622,163 @@ function getDisplayPlayerName(playerId: number | null) {
   return name
 }
 
+function isLocalModalDismissed(key: string) {
+  return dismissedLocalModalKeys.value.has(key)
+}
+
+function getCurrentNextAcknowledgedIds() {
+  if (!localNextModalKey.value) {
+    return []
+  }
+
+  const acknowledgements = gameState.value.nextAcknowledgements ?? {}
+
+  if (gameState.value.phase === 'role-reveal') {
+    return acknowledgements[`role-reveal:${gameState.value.round}`] ?? []
+  }
+
+  return acknowledgements[localNextModalKey.value] ?? []
+}
+
+function dismissLocalModal() {
+  if (!localNextModalKey.value) {
+    return
+  }
+
+  void acknowledgeNext()
+}
+
+async function acknowledgeNext() {
+  if (!localPlayer.value || gameState.value.phase === 'sleep') {
+    return
+  }
+
+  const modalKey = localNextModalKey.value
+
+  if (!modalKey) {
+    return
+  }
+
+  const nextAcknowledgements = {
+    ...(gameState.value.nextAcknowledgements ?? {}),
+    [modalKey]: Array.from(
+      new Set([...(gameState.value.nextAcknowledgements?.[modalKey] ?? []), localPlayer.value.id]),
+    ),
+  }
+  let nextState = {
+    ...gameState.value,
+    nextAcknowledgements,
+    nextAcknowledgedIds: nextAcknowledgements[modalKey],
+  }
+  const requiredHumans = nextState.players.filter((player) => player.kind === 'human')
+  const acknowledgedCount = requiredHumans.filter((player) =>
+    nextState.nextAcknowledgements[modalKey].includes(player.id),
+  ).length
+
+  if (
+    requiredHumans.length > 0 &&
+    (acknowledgedCount < requiredHumans.length || !canRunAutomatedGameAction.value)
+  ) {
+    gameState.value = nextState
+    await persistCurrentGameState()
+    return
+  }
+
+  await continueAfterNextGate(modalKey, nextState)
+}
+
+async function continueAfterNextGate(modalKey: string, currentState = gameState.value) {
+  let nextState = currentState
+
+  switch (nextState.phase) {
+    case 'role-reveal':
+      hasSeenRoleReveal.value = true
+      nextState = advanceToIntroPhase(nextState)
+      break
+    case 'intro':
+      nextState = advanceToSleepPhase(nextState)
+      break
+    case 'sleep-story':
+      nextState = advanceToMafiaPhase(nextState)
+      break
+    case 'mafia':
+      await letMafiaAct()
+      return
+    case 'mafia-sleep':
+      nextState = advanceToDetectivePhase(nextState)
+      break
+    case 'detective':
+      if (nextState.investigationTargetId !== null) {
+        nextState = advanceToSunrisePhase(nextState)
+      }
+      break
+    case 'sunrise':
+      if (modalKey.startsWith('night-death-intro:')) {
+        gameState.value = nextState
+        await persistCurrentGameState()
+        return
+      }
+
+      if (nextState.lastEliminatedId !== null && !modalKey.startsWith('night-death:')) {
+        break
+      }
+
+      nextState = advanceToDiscussionPhase(nextState)
+      break
+    case 'elimination':
+      if (modalKey.startsWith('vote-result:')) {
+        gameState.value = nextState
+        await persistCurrentGameState()
+        return
+      }
+
+      nextState = finalizeElimination(nextState)
+      break
+    default:
+      return
+  }
+
+  gameState.value = nextState
+  await persistCurrentGameState()
+}
+
+async function advanceWhenNextGateIsComplete() {
+  if (
+    isNextGateAdvanceBusy.value ||
+    !canRunAutomatedGameAction.value ||
+    gameState.value.phase === 'sleep'
+  ) {
+    return
+  }
+
+  const modalKey = localNextModalKey.value
+
+  if (!modalKey) {
+    return
+  }
+
+  const requiredHumans = gameState.value.players.filter((player) => player.kind === 'human')
+
+  if (requiredHumans.length === 0) {
+    return
+  }
+
+  const acknowledgedIds = gameState.value.nextAcknowledgements?.[modalKey] ?? []
+  const acknowledgedCount = requiredHumans.filter((player) => acknowledgedIds.includes(player.id)).length
+
+  if (acknowledgedCount < requiredHumans.length) {
+    return
+  }
+
+  isNextGateAdvanceBusy.value = true
+
+  try {
+    await continueAfterNextGate(modalKey)
+  } finally {
+    isNextGateAdvanceBusy.value = false
+  }
+}
+
 async function joinLobbyMode() {
   const lobbyCode = lobbyCodeInput.value.trim().toUpperCase()
 
@@ -513,17 +829,6 @@ async function handleStartGame() {
   })
 }
 
-async function continueToIntro() {
-  hasSeenRoleReveal.value = true
-  gameState.value = advanceToIntroPhase(gameState.value)
-  await persistCurrentGameState()
-}
-
-async function continueToSleep() {
-  gameState.value = advanceToSleepPhase(gameState.value)
-  await persistCurrentGameState()
-}
-
 async function acknowledgeSleep() {
   if (!localPlayer.value) {
     return
@@ -531,6 +836,39 @@ async function acknowledgeSleep() {
 
   gameState.value = acknowledgeSleepPhase(gameState.value, localPlayer.value.id)
   await persistCurrentGameState()
+}
+
+async function advanceWhenSleepGateIsComplete() {
+  if (
+    isSleepGateAdvanceBusy.value ||
+    !canRunAutomatedGameAction.value ||
+    gameState.value.phase !== 'sleep'
+  ) {
+    return
+  }
+
+  const requiredHumans = getAlivePlayers(gameState.value).filter((player) => player.kind === 'human')
+
+  if (requiredHumans.length === 0) {
+    return
+  }
+
+  const acknowledgedCount = requiredHumans.filter((player) =>
+    gameState.value.sleepAcknowledgedIds.includes(player.id),
+  ).length
+
+  if (acknowledgedCount < requiredHumans.length) {
+    return
+  }
+
+  isSleepGateAdvanceBusy.value = true
+
+  try {
+    gameState.value = advanceToSleepStoryPhase(gameState.value)
+    await persistCurrentGameState()
+  } finally {
+    isSleepGateAdvanceBusy.value = false
+  }
 }
 
 async function selectMafiaTarget(targetId: number) {
@@ -563,11 +901,6 @@ async function letMafiaAct() {
   await persistCurrentGameState()
 }
 
-async function continueToDetective() {
-  gameState.value = advanceToDetectivePhase(gameState.value)
-  await persistCurrentGameState()
-}
-
 async function selectDetectiveTarget(targetId: number) {
   if (!localPlayer.value || !canLocalInvestigate.value) {
     return
@@ -595,16 +928,6 @@ async function letDetectivesAct() {
   }
 
   gameState.value = nextState
-  await persistCurrentGameState()
-}
-
-async function continueToSunrise() {
-  gameState.value = advanceToSunrisePhase(gameState.value)
-  await persistCurrentGameState()
-}
-
-async function continueToDiscussion() {
-  gameState.value = advanceToDiscussionPhase(gameState.value)
   await persistCurrentGameState()
 }
 
@@ -657,11 +980,6 @@ async function selectVoteTarget(targetId: number) {
 async function continueAfterTie() {
   gameState.value = restartVoteAfterTie(gameState.value)
   isVoteModalMinimized.value = false
-  await persistCurrentGameState()
-}
-
-async function finalizeEliminationPhase() {
-  gameState.value = finalizeElimination(gameState.value)
   await persistCurrentGameState()
 }
 
@@ -762,18 +1080,10 @@ function subscribeCurrentLobby() {
 }
 
 function scheduleRoleRevealDismissal() {
-  if (gameState.value.phase !== 'role-reveal' || hasSeenRoleReveal.value) {
-    return
-  }
-
   if (roleRevealTimeoutId.value !== null) {
     window.clearTimeout(roleRevealTimeoutId.value)
-  }
-
-  roleRevealTimeoutId.value = window.setTimeout(() => {
-    void continueToIntro()
     roleRevealTimeoutId.value = null
-  }, 3000)
+  }
 }
 
 function scheduleIntroAdvance() {
@@ -782,14 +1092,6 @@ function scheduleIntroAdvance() {
     introAdvanceTimeoutId.value = null
   }
 
-  if (gameState.value.phase !== 'intro') {
-    return
-  }
-
-  introAdvanceTimeoutId.value = window.setTimeout(() => {
-    void continueToSleep()
-    introAdvanceTimeoutId.value = null
-  }, 3000)
 }
 
 function scheduleNightAutomation() {
@@ -802,44 +1104,14 @@ function scheduleNightAutomation() {
     return
   }
 
-  if (gameState.value.phase === 'mafia' && !canHumansActAsMafia.value) {
-    nightAutomationTimeoutId.value = window.setTimeout(() => {
-      void letMafiaAct()
-      nightAutomationTimeoutId.value = null
-    }, 3000)
-    return
-  }
-
-  if (gameState.value.phase === 'mafia-sleep') {
-    nightAutomationTimeoutId.value = window.setTimeout(() => {
-      void continueToDetective()
-      nightAutomationTimeoutId.value = null
-    }, 3000)
-    return
-  }
-
-  if (gameState.value.phase === 'detective' && gameState.value.investigationTargetId !== null) {
-    nightAutomationTimeoutId.value = window.setTimeout(() => {
-      void continueToSunrise()
-      nightAutomationTimeoutId.value = null
-    }, 3000)
-    return
-  }
-
   if (gameState.value.phase === 'detective' && !canHumansActAsDetectives.value) {
     nightAutomationTimeoutId.value = window.setTimeout(() => {
       void letDetectivesAct()
       nightAutomationTimeoutId.value = null
-    }, 3000)
+    }, 0)
     return
   }
 
-  if (gameState.value.phase === 'sunrise') {
-    nightAutomationTimeoutId.value = window.setTimeout(() => {
-      void continueToDiscussion()
-      nightAutomationTimeoutId.value = null
-    }, 3000)
-  }
 }
 
 function scheduleBotDiscussion() {
@@ -882,12 +1154,26 @@ function scheduleVoteAutomation() {
   }, 2000)
 }
 
+function scheduleEliminationAutomation() {
+  if (eliminationAutomationTimeoutId.value !== null) {
+    window.clearTimeout(eliminationAutomationTimeoutId.value)
+    eliminationAutomationTimeoutId.value = null
+  }
+
+}
+
+function scheduleLocalNextButton() {
+  isLocalNextVisible.value = Boolean(localNextModalKey.value)
+}
+
 onMounted(() => {
   scheduleRoleRevealDismissal()
   scheduleIntroAdvance()
   scheduleNightAutomation()
   scheduleBotDiscussion()
   scheduleVoteAutomation()
+  scheduleEliminationAutomation()
+  scheduleLocalNextButton()
 })
 
 watch(
@@ -899,14 +1185,22 @@ watch(
     gameState.value.detectiveVotes.length,
     gameState.value.investigationTargetId,
     gameState.value.voteChoices.length,
+    gameState.value.sleepAcknowledgedIds.length,
+    gameState.value.nextAcknowledgedIds.length,
+    JSON.stringify(gameState.value.nextAcknowledgements ?? {}),
     nextVoteVoter.value?.id,
     nextAiVoteVoter.value?.id,
+    localNextModalKey.value,
   ],
   () => {
     scheduleIntroAdvance()
     scheduleNightAutomation()
     scheduleBotDiscussion()
     scheduleVoteAutomation()
+    scheduleEliminationAutomation()
+    scheduleLocalNextButton()
+    void advanceWhenSleepGateIsComplete()
+    void advanceWhenNextGateIsComplete()
   },
 )
 
@@ -945,6 +1239,10 @@ onBeforeUnmount(() => {
 
   if (voteAutomationTimeoutId.value !== null) {
     window.clearTimeout(voteAutomationTimeoutId.value)
+  }
+
+  if (eliminationAutomationTimeoutId.value !== null) {
+    window.clearTimeout(eliminationAutomationTimeoutId.value)
   }
 
   unsubscribeCurrentLobby()
@@ -1007,7 +1305,7 @@ onBeforeUnmount(() => {
   </div>
 
   <div
-    v-if="gameState.phase === 'role-reveal' && !hasSeenRoleReveal"
+    v-if="isRoleRevealModalOpen"
     class="role-reveal-backdrop"
     role="presentation"
   >
@@ -1015,6 +1313,15 @@ onBeforeUnmount(() => {
       <p class="eyebrow">Your Role</p>
       <h2>{{ localRoleLabel }}</h2>
       <p>Your partner has the same fate. Keep it secret.</p>
+      <button
+        v-if="isLocalNextVisible && localNextModalKey"
+        type="button"
+        class="secondary-button"
+        :disabled="hasLocalNextAcknowledged"
+        @click="dismissLocalModal"
+      >
+        {{ nextButtonLabel }}
+      </button>
     </section>
   </div>
 
@@ -1050,10 +1357,7 @@ onBeforeUnmount(() => {
     <section class="role-reveal-modal detective-modal" role="dialog" aria-modal="true">
       <p class="eyebrow">Killer Night</p>
       <h2>The killer chooses a target.</h2>
-      <p v-if="!canSeeMafiaInfo">
-        Stay quiet. The Game Master is waiting for the killer to make a choice.
-      </p>
-      <p v-else-if="nextMafiaVoter && !isLocalMafiaTurn" class="warning-text">
+      <p v-if="nextMafiaVoter && !isLocalMafiaTurn" class="warning-text">
         Waiting for {{ getDisplayPlayerName(nextMafiaVoter.id) }} to choose.
       </p>
       <p v-else>Choose one non-Mafia player to eliminate tonight.</p>
@@ -1069,6 +1373,69 @@ onBeforeUnmount(() => {
           {{ player.name }}
         </button>
       </div>
+    </section>
+  </div>
+
+  <div
+    v-if="isDetectiveResultModalOpen"
+    class="role-reveal-backdrop detective-modal-backdrop"
+    role="presentation"
+  >
+    <section class="role-reveal-modal detective-modal" role="dialog" aria-modal="true">
+      <p class="eyebrow">Game Master Result</p>
+      <h2>{{ investigationTargetName }}</h2>
+      <p>
+        The Game Master quietly says this person looks like {{ investigationRead }}.
+      </p>
+      <button
+        v-if="isLocalNextVisible && localNextModalKey"
+        type="button"
+        class="secondary-button"
+        :disabled="hasLocalNextAcknowledged"
+        @click="dismissLocalModal"
+      >
+        {{ nextButtonLabel }}
+      </button>
+    </section>
+  </div>
+
+  <div
+    v-if="isNightDeathIntroModalOpen"
+    class="modal-backdrop vote-modal-backdrop"
+    role="presentation"
+  >
+    <section class="help-modal vote-modal death-announcement-modal" role="dialog" aria-modal="true">
+      <p class="eyebrow">Morning News</p>
+      <h2>After morning arose, one member did not survive and was found lying on the ground.</h2>
+      <button
+        v-if="isLocalNextVisible && localNextModalKey"
+        type="button"
+        class="secondary-button"
+        :disabled="hasLocalNextAcknowledged"
+        @click="dismissLocalModal"
+      >
+        {{ nextButtonLabel }}
+      </button>
+    </section>
+  </div>
+
+  <div
+    v-if="isNightDeathModalOpen"
+    class="modal-backdrop vote-modal-backdrop"
+    role="presentation"
+  >
+    <section class="help-modal vote-modal death-announcement-modal" role="dialog" aria-modal="true">
+      <p class="eyebrow">Morning News</p>
+      <h2>{{ lastEliminatedName }} did not survive the night.</h2>
+      <button
+        v-if="isLocalNextVisible && localNextModalKey"
+        type="button"
+        class="secondary-button"
+        :disabled="hasLocalNextAcknowledged"
+        @click="dismissLocalModal"
+      >
+        {{ nextButtonLabel }}
+      </button>
     </section>
   </div>
 
@@ -1100,6 +1467,13 @@ onBeforeUnmount(() => {
         </p>
       </template>
 
+      <template v-else-if="gameState.phase === 'sleep-story'">
+        <h3>Everyone is sleeping.</h3>
+        <p class="story-text">
+          The Game Master waits until the room is silent before calling the next secret role.
+        </p>
+      </template>
+
       <template v-else-if="gameState.phase === 'mafia'">
         <p v-if="canSeeMafiaInfo && mafiaVoteSummary" class="result-text">
           {{ mafiaVoteSummary }}.
@@ -1116,19 +1490,21 @@ onBeforeUnmount(() => {
         >
           Investigation submitted. Waiting for your partner.
         </p>
-        <p
-          v-if="canSeeDetectiveInfo && gameState.investigationTargetId !== null"
-          class="result-text"
-        >
-          The Game Master quietly says {{ investigationTargetName }} looks like
-          {{ investigationRead }}.
-        </p>
       </template>
 
       <template v-else-if="gameState.phase === 'sunrise'">
-        <h3>{{ lastEliminatedName }} did not survive the night.</h3>
-        <button type="button" @click="continueToDiscussion">Start Discussion</button>
+        <h3>Morning reveals the result of the night.</h3>
       </template>
+
+      <button
+        v-if="isLocalNextVisible && localNextModalKey"
+        type="button"
+        class="secondary-button"
+        :disabled="hasLocalNextAcknowledged"
+        @click="dismissLocalModal"
+      >
+        {{ nextButtonLabel }}
+      </button>
     </section>
   </div>
 
@@ -1198,19 +1574,28 @@ onBeforeUnmount(() => {
       </div>
 
       <button
-        v-if="isDiscussionComplete"
+        v-if="canOpenVotingFromDiscussion"
         type="button"
         @click="proceedToVoting"
       >
         Vote
       </button>
+      <p
+        v-else-if="isDiscussionComplete && localPlayer?.status !== 'alive'"
+        class="warning-text"
+      >
+        You were eliminated. You can only spectate voting.
+      </p>
       <button
-        v-else-if="gameState.phase === 'voting' && localPlayer?.status === 'alive'"
+        v-else-if="canShowDiscussionVoteButton"
         type="button"
         @click="openVoteModal"
       >
         Vote
       </button>
+      <p v-else-if="gameState.phase === 'voting' && hasLocalVoted" class="warning-text">
+        Your vote is locked in.
+      </p>
       <p v-else-if="gameState.phase === 'voting'" class="warning-text">
         You were eliminated. You can only spectate voting.
       </p>
@@ -1283,7 +1668,7 @@ onBeforeUnmount(() => {
 
       <template v-else>
         <h2>{{ getDisplayPlayerName(gameState.pendingEliminationId) }} has the highest vote.</h2>
-        <p class="story-text">The town has made its decision. This player will be eliminated.</p>
+        <p class="story-text">The town has made its decision. This player will be eliminated automatically.</p>
       </template>
 
       <div v-if="voteResultEntries.length" class="vote-log">
@@ -1298,11 +1683,48 @@ onBeforeUnmount(() => {
         </article>
       </div>
 
-      <button v-if="gameState.phase === 'tie-dialogue'" type="button" @click="continueAfterTie">
+      <button
+        v-if="gameState.phase === 'tie-dialogue' && localPlayer?.status === 'alive'"
+        type="button"
+        @click="continueAfterTie"
+      >
         Vote Again
       </button>
-      <button v-else type="button" @click="finalizeEliminationPhase">
-        Eliminate Player
+      <p
+        v-else-if="gameState.phase === 'tie-dialogue'"
+        class="warning-text"
+      >
+        You were eliminated. You can only spectate the vote.
+      </p>
+      <p v-else class="warning-text">Elimination will continue automatically.</p>
+      <button
+        v-if="gameState.phase === 'elimination' && isLocalNextVisible && localNextModalKey"
+        type="button"
+        class="secondary-button"
+        :disabled="hasLocalNextAcknowledged"
+        @click="dismissLocalModal"
+      >
+        {{ nextButtonLabel }}
+      </button>
+    </section>
+  </div>
+
+  <div
+    v-if="isVoteEliminationModalOpen"
+    class="modal-backdrop vote-modal-backdrop"
+    role="presentation"
+  >
+    <section class="help-modal vote-modal death-announcement-modal" role="dialog" aria-modal="true">
+      <p class="eyebrow">Voting Elimination</p>
+      <h2>{{ getDisplayPlayerName(gameState.pendingEliminationId) }} was eliminated by the town's vote.</h2>
+      <button
+        v-if="isLocalNextVisible && localNextModalKey"
+        type="button"
+        class="secondary-button"
+        :disabled="hasLocalNextAcknowledged"
+        @click="dismissLocalModal"
+      >
+        {{ nextButtonLabel }}
       </button>
     </section>
   </div>
@@ -1503,6 +1925,11 @@ onBeforeUnmount(() => {
           <h3>Everyone closes their eyes.</h3>
         </template>
 
+        <template v-else-if="gameState.phase === 'sleep-story'">
+          <p class="eyebrow">The room is quiet</p>
+          <h3>The Game Master confirms that everyone is sleeping.</h3>
+        </template>
+
         <template v-else-if="gameState.phase === 'mafia'">
           <p class="eyebrow">Everyone closes their eyes</p>
           <h3>The killer chooses one player to eliminate.</h3>
@@ -1520,7 +1947,7 @@ onBeforeUnmount(() => {
 
         <template v-else-if="gameState.phase === 'sunrise'">
           <p class="eyebrow">Morning arrives</p>
-          <h3>{{ lastEliminatedName }} did not survive the night.</h3>
+          <h3>Morning reveals the result of the night.</h3>
         </template>
 
         <template v-else-if="gameState.phase === 'discussion'">
@@ -1551,7 +1978,7 @@ onBeforeUnmount(() => {
           <p class="eyebrow">Final choice</p>
           <h3>{{ getDisplayPlayerName(gameState.pendingEliminationId) }} is the most voted player.</h3>
           <p class="story-text">{{ narrationText }}</p>
-          <p class="warning-text">Confirm elimination from the vote result modal.</p>
+          <p class="warning-text">Elimination will continue automatically.</p>
         </template>
 
         <template v-else>

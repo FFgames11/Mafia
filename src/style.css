@@ -744,6 +744,12 @@ h3 {
   width: min(620px, 100%);
 }
 
+.death-announcement-modal h2 {
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
 .discussion-count {
   padding: 0.45rem 0.75rem;
   border: 1px solid var(--line);

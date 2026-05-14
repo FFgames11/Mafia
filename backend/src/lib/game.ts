@@ -24,6 +24,8 @@ export interface GameState {
   humanTeamRole: PlayerRole
   phase: string
   round: number
+  nextAcknowledgedIds: number[]
+  nextAcknowledgements: Record<string, number[]>
   pendingEliminationId: number | null
   sleepAcknowledgedIds: number[]
   mafiaVotes: Array<{
@@ -143,6 +145,8 @@ function createBaseGameState(
     humanTeamRole,
     phase: 'setup',
     round: 1,
+    nextAcknowledgedIds: [],
+    nextAcknowledgements: {},
     pendingEliminationId: null,
     sleepAcknowledgedIds: [],
     mafiaVotes: [],
