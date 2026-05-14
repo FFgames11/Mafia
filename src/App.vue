@@ -403,6 +403,10 @@ const isVoteResultModalOpen = computed(() => {
   return gameState.value.phase === 'tie-dialogue' || gameState.value.phase === 'elimination'
 })
 
+const isKillerTargetModalOpen = computed(() => {
+  return gameState.value.phase === 'mafia' && gameState.value.pendingEliminationId === null
+})
+
 const lobbySlots = computed(() => {
   return Array.from({ length: 8 }, (_, index) => {
     const id = index + 1
@@ -1039,6 +1043,36 @@ onBeforeUnmount(() => {
   </div>
 
   <div
+    v-if="isKillerTargetModalOpen"
+    class="role-reveal-backdrop detective-modal-backdrop"
+    role="presentation"
+  >
+    <section class="role-reveal-modal detective-modal" role="dialog" aria-modal="true">
+      <p class="eyebrow">Killer Night</p>
+      <h2>The killer chooses a target.</h2>
+      <p v-if="!canSeeMafiaInfo">
+        Stay quiet. The Game Master is waiting for the killer to make a choice.
+      </p>
+      <p v-else-if="nextMafiaVoter && !isLocalMafiaTurn" class="warning-text">
+        Waiting for {{ getDisplayPlayerName(nextMafiaVoter.id) }} to choose.
+      </p>
+      <p v-else>Choose one non-Mafia player to eliminate tonight.</p>
+
+      <div v-if="canHumansActAsMafia && isLocalMafiaTurn" class="target-grid">
+        <button
+          v-for="player in mafiaTargets"
+          :key="player.id"
+          type="button"
+          class="target-button"
+          @click="selectMafiaTarget(player.id)"
+        >
+          {{ player.name }}
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div
     v-if="isStoryModalOpen"
     class="modal-backdrop story-modal-backdrop"
     role="presentation"
@@ -1070,23 +1104,6 @@ onBeforeUnmount(() => {
         <p v-if="canSeeMafiaInfo && mafiaVoteSummary" class="result-text">
           {{ mafiaVoteSummary }}.
         </p>
-        <p v-if="!canSeeMafiaInfo && !canHumansActAsMafia" class="warning-text">
-          The killer is choosing a target.
-        </p>
-        <p v-if="canSeeMafiaInfo && nextMafiaVoter" class="warning-text">
-          Waiting for {{ getDisplayPlayerName(nextMafiaVoter.id) }} to choose.
-        </p>
-        <div v-if="canHumansActAsMafia && isLocalMafiaTurn" class="target-grid">
-          <button
-            v-for="player in mafiaTargets"
-            :key="player.id"
-            type="button"
-            class="target-button"
-            @click="selectMafiaTarget(player.id)"
-          >
-            {{ player.name }}
-          </button>
-        </div>
       </template>
 
       <template v-else-if="gameState.phase === 'detective'">
