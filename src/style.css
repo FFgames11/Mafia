@@ -111,6 +111,41 @@ button:focus-visible {
   box-shadow: var(--shadow);
 }
 
+.role-reveal-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(12px);
+}
+
+.role-reveal-modal {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border: 1px solid rgba(214, 164, 79, 0.45);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top, rgba(214, 164, 79, 0.18), transparent 16rem),
+    linear-gradient(145deg, rgba(20, 16, 13, 0.98), rgba(8, 7, 6, 0.98));
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.role-reveal-modal h2 {
+  color: var(--text);
+  font-size: clamp(3rem, 12vw, 6rem);
+  letter-spacing: -0.08em;
+}
+
+.role-reveal-modal p:last-child {
+  color: var(--muted);
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -614,6 +649,109 @@ h3 {
   color: var(--text) !important;
   background: rgba(255, 248, 235, 0.07);
   font-size: 1.02rem;
+}
+
+.discussion-log {
+  display: grid;
+  gap: 0.85rem;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 0.5rem;
+  scrollbar-color: rgba(214, 164, 79, 0.72) rgba(255, 248, 235, 0.08);
+  scrollbar-width: thin;
+}
+
+.discussion-log::-webkit-scrollbar,
+.help-modal::-webkit-scrollbar {
+  width: 0.65rem;
+}
+
+.discussion-log::-webkit-scrollbar-track,
+.help-modal::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(255, 248, 235, 0.07);
+}
+
+.discussion-log::-webkit-scrollbar-thumb,
+.help-modal::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(20, 16, 13, 0.96);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(214, 164, 79, 0.95), rgba(169, 45, 36, 0.82));
+}
+
+.discussion-log::-webkit-scrollbar-thumb:hover,
+.help-modal::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 201, 106, 0.98), rgba(190, 62, 49, 0.9));
+}
+
+.discussion-line {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 248, 235, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 248, 235, 0.05);
+}
+
+.discussion-line span {
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.discussion-line p {
+  color: var(--text) !important;
+}
+
+.vote-log {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid rgba(214, 164, 79, 0.28);
+  border-radius: 16px;
+  background: rgba(214, 164, 79, 0.07);
+}
+
+.vote-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(255, 248, 235, 0.06);
+}
+
+.vote-line span {
+  color: var(--muted);
+}
+
+.vote-line strong {
+  color: var(--text);
+}
+
+.discussion-modal {
+  width: min(820px, 100%);
+}
+
+.story-modal {
+  width: min(760px, 100%);
+}
+
+.vote-modal {
+  width: min(620px, 100%);
+}
+
+.discussion-count {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--gold);
+  background: rgba(255, 248, 235, 0.06);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
 }
 
 .game-player-grid {

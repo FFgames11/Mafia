@@ -1,0 +1,126 @@
+{
+  "good_person_hints": [
+    {
+      "id": "detective_good_001",
+      "text": "I do not think [player] is where we should spend our vote today."
+    },
+    {
+      "id": "detective_good_002",
+      "text": "My read on [player] is leaning good, at least from what I can tell."
+    },
+    {
+      "id": "detective_good_003",
+      "text": "I would be careful about pushing [player] too hard right now."
+    },
+    {
+      "id": "detective_good_004",
+      "text": "[player] feels more like a safe direction than a dangerous one."
+    },
+    {
+      "id": "detective_good_005",
+      "text": "Something about [player] makes me think they are not the main problem."
+    },
+    {
+      "id": "detective_good_006",
+      "text": "If we vote [player], I think we may be helping the wrong side."
+    },
+    {
+      "id": "detective_good_007",
+      "text": "I have a reason to believe [player] is probably a good person."
+    },
+    {
+      "id": "detective_good_008",
+      "text": "[player] is not my priority suspect after last night."
+    },
+    {
+      "id": "detective_good_009",
+      "text": "I would rather look away from [player] and compare the other stories."
+    },
+    {
+      "id": "detective_good_010",
+      "text": "The table may be reading [player] too harshly."
+    },
+    {
+      "id": "detective_good_011",
+      "text": "I think [player] is more useful to keep around than to remove."
+    },
+    {
+      "id": "detective_good_012",
+      "text": "My strongest feeling is that [player] is not the hidden threat."
+    },
+    {
+      "id": "detective_good_013",
+      "text": "[player] looks cleaner to me than the rest of the room."
+    },
+    {
+      "id": "detective_good_014",
+      "text": "I would not build today's vote around [player]."
+    },
+    {
+      "id": "detective_good_015",
+      "text": "There are better suspects than [player] if we are trying to be careful."
+    }
+  ],
+  "bad_person_hints": [
+    {
+      "id": "detective_bad_001",
+      "text": "I think [player] deserves serious attention today."
+    },
+    {
+      "id": "detective_bad_002",
+      "text": "My read on [player] is leaning bad, and I do not want to ignore that."
+    },
+    {
+      "id": "detective_bad_003",
+      "text": "[player] is the name I keep coming back to after last night."
+    },
+    {
+      "id": "detective_bad_004",
+      "text": "I would like the room to pressure [player] before we vote."
+    },
+    {
+      "id": "detective_bad_005",
+      "text": "Something about [player] feels more dangerous than the others."
+    },
+    {
+      "id": "detective_bad_006",
+      "text": "If we need a direction, [player] is where I would start."
+    },
+    {
+      "id": "detective_bad_007",
+      "text": "I have a reason to think [player] may be a bad person."
+    },
+    {
+      "id": "detective_bad_008",
+      "text": "[player] should not slide through this discussion quietly."
+    },
+    {
+      "id": "detective_bad_009",
+      "text": "The vote should not happen before [player] explains themselves."
+    },
+    {
+      "id": "detective_bad_010",
+      "text": "I am more worried about [player] than the easy suspects."
+    },
+    {
+      "id": "detective_bad_011",
+      "text": "[player] is giving me the strongest warning sign right now."
+    },
+    {
+      "id": "detective_bad_012",
+      "text": "I would not call it proof out loud, but [player] looks bad to me."
+    },
+    {
+      "id": "detective_bad_013",
+      "text": "The room should test [player]'s story carefully."
+    },
+    {
+      "id": "detective_bad_014",
+      "text": "If we are wrong today, I think it will be because we ignored [player]."
+    },
+    {
+      "id": "detective_bad_015",
+      "text": "[player] is not someone I am comfortable trusting."
+    }
+  ]
+}

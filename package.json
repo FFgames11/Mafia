@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "dev:client": "vite --host 127.0.0.1",
+    "dev:backend": "npm --prefix backend run dev",
     "build": "vue-tsc -b && vite build",
+    "build:backend": "npm --prefix backend run build",
     "preview": "vite preview"
   },
   "dependencies": {

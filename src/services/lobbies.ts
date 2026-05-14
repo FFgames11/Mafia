@@ -1,7 +1,8 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
-import { createLobbyGameState } from '../game/setup'
 import type { GameState, Player, PlayerKind } from '../game/types'
 import { supabase } from './supabase'
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000'
 
 interface LobbyRow {
   code: string
@@ -55,6 +56,7 @@ function mapLobbyState(
   if (lobby.game_state) {
     return {
       ...lobby.game_state,
+      seatOrder: lobby.game_state.seatOrder ?? lobby.game_state.players.map((player) => player.id),
       localPlayerId,
     }
   }
@@ -68,6 +70,7 @@ function mapLobbyState(
     localPlayerId,
     hostPlayerId: 1,
     phase: lobby.status === 'started' ? 'role-reveal' : 'setup',
+    seatOrder: players.map((player) => player.slot_number),
     players: players
       .map((player) => mapPlayer(player, fallbackPlayersById.get(player.slot_number)?.role ?? 'villager'))
       .sort((first, second) => first.id - second.id),
@@ -107,128 +110,46 @@ async function fetchLobbyRows(lobbyCode: string) {
 }
 
 export async function createOnlineLobby() {
-  const fallbackState = createLobbyGameState()
-  const lobbyCode = fallbackState.lobbyCode
   const clientId = getClientId()
-
-  if (!lobbyCode) {
-    throw new Error('Failed to create lobby code.')
-  }
-
-  const { error: lobbyError } = await supabase.from('lobbies').insert({
-    code: lobbyCode,
-    host_client_id: clientId,
+  const { lobby } = await apiRequest<{ lobby: GameState }>('/api/lobbies', {
+    method: 'POST',
+    body: JSON.stringify({ clientId }),
   })
 
-  if (lobbyError) {
-    throw lobbyError
-  }
-
-  const { error: playersError } = await supabase.from('lobby_players').insert(
-    fallbackState.players.map((player) => ({
-      lobby_code: lobbyCode,
-      client_id: player.isHost ? clientId : `ai-${lobbyCode}-${player.id}`,
-      slot_number: player.id,
-      display_name: player.name,
-      kind: player.kind,
-      is_host: player.isHost,
-      is_ready: player.isReady,
-    })),
-  )
-
-  if (playersError) {
-    throw playersError
-  }
-
-  return mapLobbyState(
-    { code: lobbyCode, status: 'waiting', host_client_id: clientId, game_state: null },
-    fallbackState.players.map((player) => ({
-      lobby_code: lobbyCode,
-      client_id: player.isHost ? clientId : `ai-${lobbyCode}-${player.id}`,
-      slot_number: player.id,
-      display_name: player.name,
-      kind: player.kind,
-      is_host: player.isHost,
-      is_ready: player.isReady,
-    })),
-    1,
-    fallbackState,
-  )
+  return lobby
 }
 
 export async function joinOnlineLobby(lobbyCode: string) {
-  const existingLobby = await fetchLobbyRows(lobbyCode)
-
-  if (!existingLobby) {
-    throw new Error('Lobby not found.')
-  }
-
-  const hasSecondHuman = existingLobby.players.some((player) => player.slot_number === 2)
-
-  if (hasSecondHuman) {
-    throw new Error('Lobby is already full.')
-  }
-
-  const fallbackState = createLobbyGameState()
-  const playerTwo = fallbackState.players.find((player) => player.kind === 'human' && !player.isHost)
   const clientId = getClientId()
-
-  const { error } = await supabase.from('lobby_players').insert({
-    lobby_code: lobbyCode,
-    client_id: clientId,
-    slot_number: 2,
-    display_name: playerTwo?.name ?? 'Mystery Guest',
-    kind: 'human',
-    is_host: false,
-    is_ready: false,
+  const { lobby } = await apiRequest<{ lobby: GameState }>('/api/lobbies/join', {
+    method: 'POST',
+    body: JSON.stringify({ code: lobbyCode, clientId }),
   })
 
-  if (error) {
-    throw error
-  }
-
-  const joinedLobby = await fetchLobbyRows(lobbyCode)
-
-  if (!joinedLobby) {
-    throw new Error('Lobby disappeared after joining.')
-  }
-
-  return mapLobbyState(joinedLobby.lobby, joinedLobby.players, 2, fallbackState)
+  return lobby
 }
 
 export async function setOnlinePlayerReady(lobbyCode: string, isReady: boolean) {
   const clientId = getClientId()
-  const { error } = await supabase
-    .from('lobby_players')
-    .update({ is_ready: isReady })
-    .eq('lobby_code', lobbyCode)
-    .eq('client_id', clientId)
-
-  if (error) {
-    throw error
-  }
+  await apiRequest(`/api/lobbies/${lobbyCode}/ready`, {
+    method: 'PATCH',
+    body: JSON.stringify({ clientId, isReady }),
+  })
 }
 
 export async function startOnlineLobby(lobbyCode: string, gameState: GameState) {
-  const { error } = await supabase
-    .from('lobbies')
-    .update({ status: 'started', game_state: gameState })
-    .eq('code', lobbyCode)
-
-  if (error) {
-    throw error
-  }
+  const clientId = getClientId()
+  await apiRequest(`/api/lobbies/${lobbyCode}/start`, {
+    method: 'POST',
+    body: JSON.stringify({ clientId, gameState }),
+  })
 }
 
 export async function updateOnlineGameState(lobbyCode: string, gameState: GameState) {
-  const { error } = await supabase
-    .from('lobbies')
-    .update({ game_state: gameState })
-    .eq('code', lobbyCode)
-
-  if (error) {
-    throw error
-  }
+  await apiRequest(`/api/lobbies/${lobbyCode}/state`, {
+    method: 'PATCH',
+    body: JSON.stringify({ gameState }),
+  })
 }
 
 export function subscribeToLobby(
@@ -267,4 +188,21 @@ export async function refreshOnlineLobby(gameState: GameState) {
   }
 
   return mapLobbyState(lobbyRows.lobby, lobbyRows.players, gameState.localPlayerId, gameState)
+}
+
+async function apiRequest<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...init?.headers,
+    },
+  })
+  const body = (await response.json().catch(() => ({}))) as T & { error?: string }
+
+  if (!response.ok) {
+    throw new Error(body.error ?? `API request failed with ${response.status}.`)
+  }
+
+  return body
 }

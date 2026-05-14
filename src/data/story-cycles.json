@@ -1,0 +1,62 @@
+[
+  {
+    "intro": "Night falls over the city. The Game Master tells everyone to settle in and remember that hidden roles are only revealed to the people who need them.",
+    "sleep": "The room grows quiet. One by one, the players close their eyes and the table falls into silence.",
+    "mafia": "The killer wakes up and points to a target. The choice has to be made carefully because every round can change the whole room.",
+    "mafia_sleep": "The killer slips back into the dark. The room stays still and quiet again.",
+    "detective": "The detective wakes up and studies the table. One player is chosen for a closer look, searching for the truth behind the mask.",
+    "sunrise": "The sun rises over the town. Footprints lead through the dirt, and the group finds a body lying in the grass with a heavy mark across the head.",
+    "discussion": "The players gather around the loss and start talking. Every story matters now, and every strange detail can help the town.",
+    "voting": "The town prepares to vote. Everyone has one chance to point at the person they believe is hiding the truth.",
+    "tie": "The vote is tied. The players who are tied have to speak again and prove why they should stay.",
+    "elimination": "The choice is made. The announcer calls out the highest-voted player and the crowd watches them leave the game."
+  },
+  {
+    "intro": "The town goes dark again. The Game Master quietly reminds everyone that even small details can matter when nobody can be trusted at first glance.",
+    "sleep": "Eyes close across the room, and the table becomes a hush of breathing and waiting.",
+    "mafia": "The killer wakes in the shadows and studies the village. Only one target will be chosen tonight.",
+    "mafia_sleep": "The killer lies back down. The night stays heavy and still.",
+    "detective": "The detective rises carefully and picks one player to inspect, hoping the clues point toward the right enemy.",
+    "sunrise": "Morning arrives with a rough trail through the dirt and a body left behind. The town must face the cost of the night.",
+    "discussion": "The group starts piecing the story together. Who sounded nervous, who pushed too hard, and who stayed too quiet?",
+    "voting": "The vote opens, and everyone decides who should be removed from the table.",
+    "tie": "Nobody wins the vote. The tied players now have to defend themselves a little longer.",
+    "elimination": "The announcer ends the debate and removes the most voted player from the game."
+  },
+  {
+    "intro": "The night opens with a warning from the Game Master. Hidden roles are in play, and the town needs to be careful before the first sound of morning.",
+    "sleep": "The lights seem to fade. The players close their eyes and wait for the night to move.",
+    "mafia": "The killer wakes and quietly chooses who will not see tomorrow.",
+    "mafia_sleep": "The killer returns to silence and lets the rest of the room keep sleeping.",
+    "detective": "The detective wakes up, scans the faces in the dark, and selects one player to investigate.",
+    "sunrise": "The sun comes up and exposes the damage from the night. A dead player is found on the ground, and the town realizes the hunt is real.",
+    "discussion": "The town meets in daylight and starts debating what the night meant. Suspicion starts to spread from table to table.",
+    "voting": "It is time to vote. The town must choose who seems most likely to be the killer.",
+    "tie": "The vote is split. The tied players get another chance to speak and shift the room.",
+    "elimination": "The crowd points to the player with the most votes, and the announcer removes them from the board."
+  },
+  {
+    "intro": "Another round begins with the Game Master setting the mood. The town is calm for a moment, but everyone knows that night always brings a secret choice.",
+    "sleep": "The room goes dark in spirit if not in sight. The players fall asleep and leave the table to the night.",
+    "mafia": "The killer wakes and chooses a target, hoping the room will not connect the dots by morning.",
+    "mafia_sleep": "The killer disappears back into the night. The table holds its breath.",
+    "detective": "The detective rises for one quiet moment, chooses a target, and listens for the answer hidden in the dark.",
+    "sunrise": "Daylight returns with a grim discovery. A body is found, the footprints are messy, and the town starts to see the danger more clearly.",
+    "discussion": "Everyone starts talking over the morning news. The story keeps changing as people try to explain themselves.",
+    "voting": "The vote begins again, and the town must decide who has earned the most suspicion.",
+    "tie": "The room cannot agree. The tied players must speak again before the crowd settles.",
+    "elimination": "The announcer calls the vote and the table loses its most targeted player."
+  },
+  {
+    "intro": "The last story of the cycle begins. The Game Master asks everyone to keep their eyes on the little details and their voices calm.",
+    "sleep": "The table drifts into silence, and the night becomes a whisper of waiting.",
+    "mafia": "The killer wakes, makes the secret choice, and decides who will not see the next sunrise.",
+    "mafia_sleep": "The killer closes their eyes and the room remains unaware for a moment longer.",
+    "detective": "The detective wakes, chooses one person to check, and hopes the clue points in the right direction.",
+    "sunrise": "Morning reveals the cost of the night. A player is found dead, the ground disturbed around them, and the town must react quickly.",
+    "discussion": "The players discuss the loss and try to understand what the night was trying to tell them.",
+    "voting": "The town casts its vote. The future of the table depends on the choice.",
+    "tie": "The vote ties again. The tied players are forced back into the spotlight to speak once more.",
+    "elimination": "The announcer removes the highest-voted player, and the next round begins if the game is not over."
+  }
+]

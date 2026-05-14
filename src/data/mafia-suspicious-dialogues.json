@@ -1,0 +1,244 @@
+{
+  "mafia_suspicious_dialogues": [
+    {
+      "id": "mafia_001",
+      "text": "I am still putting the room together. I do not want to lock in too early."
+    },
+    {
+      "id": "mafia_002",
+      "text": "The night result gives us something to think about, but not a full answer yet."
+    },
+    {
+      "id": "mafia_003",
+      "text": "I am interested in the vote pattern first, not just the loudest accusation."
+    },
+    {
+      "id": "mafia_004",
+      "text": "That line of thinking makes sense, but I want one more detail before I agree."
+    },
+    {
+      "id": "mafia_005",
+      "text": "I do not think we should force a conclusion before the table has explained itself."
+    },
+    {
+      "id": "mafia_006",
+      "text": "The situation feels messy, so I am trying to separate noise from useful information."
+    },
+    {
+      "id": "mafia_007",
+      "text": "I can see why people are looking there, but I am not convinced yet."
+    },
+    {
+      "id": "mafia_008",
+      "text": "The quick vote worries me more than the person being voted on."
+    },
+    {
+      "id": "mafia_009",
+      "text": "I want to hear how that conclusion was reached, not just what the conclusion is."
+    },
+    {
+      "id": "mafia_010",
+      "text": "If we rush this, we might miss a more useful clue."
+    },
+    {
+      "id": "mafia_011",
+      "text": "I am keeping my options open because the table is still changing."
+    },
+    {
+      "id": "mafia_012",
+      "text": "That claim is possible, but it needs a stronger chain of reasoning."
+    },
+    {
+      "id": "mafia_013",
+      "text": "I think we should compare who benefited from the confusion."
+    },
+    {
+      "id": "mafia_014",
+      "text": "The story is not clean enough for me to point a finger yet."
+    },
+    {
+      "id": "mafia_015",
+      "text": "I am not ruling anything out, but I want to be careful with this vote."
+    },
+    {
+      "id": "mafia_016",
+      "text": "The safest path may be to wait for one more round of input."
+    },
+    {
+      "id": "mafia_017",
+      "text": "I would rather not overstate what we know."
+    },
+    {
+      "id": "mafia_018",
+      "text": "The evidence is interesting, but I do not think it closes the case."
+    },
+    {
+      "id": "mafia_019",
+      "text": "I am watching the people who seem too eager to finalize things."
+    },
+    {
+      "id": "mafia_020",
+      "text": "There is a difference between a theory and something we can act on."
+    },
+    {
+      "id": "mafia_021",
+      "text": "I think we should slow down and make sure the logic still holds."
+    },
+    {
+      "id": "mafia_022",
+      "text": "The timing of that accusation is what stands out to me."
+    },
+    {
+      "id": "mafia_023",
+      "text": "I am not saying the idea is wrong, only that it needs more support."
+    },
+    {
+      "id": "mafia_024",
+      "text": "The room feels a little too sure of itself."
+    },
+    {
+      "id": "mafia_025",
+      "text": "I want to know who is steering the conversation and why."
+    },
+    {
+      "id": "mafia_026",
+      "text": "I am more interested in the vote trail than the speech itself."
+    },
+    {
+      "id": "mafia_027",
+      "text": "That explanation might be right, but I am not ready to lock it in."
+    },
+    {
+      "id": "mafia_028",
+      "text": "I think the table should be careful about following a neat answer too quickly."
+    },
+    {
+      "id": "mafia_029",
+      "text": "We should not ignore the possibility that we are missing something smaller."
+    },
+    {
+      "id": "mafia_030",
+      "text": "The clue is useful, but I am not sure it points where everyone thinks it does."
+    },
+    {
+      "id": "mafia_031",
+      "text": "I am trying to understand the sequence before I judge the person."
+    },
+    {
+      "id": "mafia_032",
+      "text": "I do not like making a loud decision when the room is still unsettled."
+    },
+    {
+      "id": "mafia_033",
+      "text": "The conversation seems to be circling the same point."
+    },
+    {
+      "id": "mafia_034",
+      "text": "I think there is a cleaner explanation, but I have not heard it yet."
+    },
+    {
+      "id": "mafia_035",
+      "text": "I am not dismissing that suspicion, only waiting to see if it survives discussion."
+    },
+    {
+      "id": "mafia_036",
+      "text": "The vote could go in a lot of directions right now."
+    },
+    {
+      "id": "mafia_037",
+      "text": "I want a little more pressure on the logic before I settle."
+    },
+    {
+      "id": "mafia_038",
+      "text": "It is possible the strongest-looking answer is not the best one."
+    },
+    {
+      "id": "mafia_039",
+      "text": "I am trying to stay focused on what can actually be proven."
+    },
+    {
+      "id": "mafia_040",
+      "text": "The table may be reading too much into one small detail."
+    },
+    {
+      "id": "mafia_041",
+      "text": "I think the group should be careful not to confuse confidence with certainty."
+    },
+    {
+      "id": "mafia_042",
+      "text": "That is a fair concern, but I do not think it is enough on its own."
+    },
+    {
+      "id": "mafia_043",
+      "text": "I am looking for who keeps benefiting from the uncertainty."
+    },
+    {
+      "id": "mafia_044",
+      "text": "The discussion is useful, but we are not quite at a decision yet."
+    },
+    {
+      "id": "mafia_045",
+      "text": "I am not against the idea; I just do not want to force it."
+    },
+    {
+      "id": "mafia_046",
+      "text": "I think there is still time to gather one more solid reason."
+    },
+    {
+      "id": "mafia_047",
+      "text": "The pattern matters more to me than the dramatic moment."
+    },
+    {
+      "id": "mafia_048",
+      "text": "I am keeping an eye on who is trying to close the case early."
+    },
+    {
+      "id": "mafia_049",
+      "text": "The best move might be to ask one more question before voting."
+    },
+    {
+      "id": "mafia_050",
+      "text": "I do not think we have enough to act decisively yet."
+    },
+    {
+      "id": "mafia_051",
+      "text": "That is a possible read, but it feels premature to me."
+    },
+    {
+      "id": "mafia_052",
+      "text": "I want to hear the second-best explanation too."
+    },
+    {
+      "id": "mafia_053",
+      "text": "The conversation is moving, but I am not sure it is moving in the right direction."
+    },
+    {
+      "id": "mafia_054",
+      "text": "We should be careful not to build too much on one night."
+    },
+    {
+      "id": "mafia_055",
+      "text": "I am not ready to call anyone out without a cleaner trail."
+    },
+    {
+      "id": "mafia_056",
+      "text": "The logic might be right, but I want to hear it one more time."
+    },
+    {
+      "id": "mafia_057",
+      "text": "I think there is a difference between suspicion and a usable case."
+    },
+    {
+      "id": "mafia_058",
+      "text": "The room is acting like the answer is obvious, and I am not there yet."
+    },
+    {
+      "id": "mafia_059",
+      "text": "I want to see whether the next speaker adds anything real."
+    },
+    {
+      "id": "mafia_060",
+      "text": "I think the safest read is to stay flexible a little longer."
+    }
+  ]
+}

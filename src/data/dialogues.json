@@ -1,0 +1,486 @@
+{
+  "human_choices": [
+    {
+      "id": "human_001",
+      "text": "I am not saying I trust anyone yet, but I want to hear who had the easiest excuse first."
+    },
+    {
+      "id": "human_002",
+      "text": "The loudest person is not always the most suspicious, but I am watching them closely."
+    },
+    {
+      "id": "human_003",
+      "text": "If someone changes their story twice, that matters more to me than a confident voice."
+    },
+    {
+      "id": "human_004",
+      "text": "I think the best clue is who is asking the least direct questions."
+    },
+    {
+      "id": "human_005",
+      "text": "We should compare who moved the conversation and who just followed along."
+    },
+    {
+      "id": "human_006",
+      "text": "I want to hear from the quiet players before I decide anything."
+    },
+    {
+      "id": "human_007",
+      "text": "The night result does not prove everything, but it does narrow the story."
+    },
+    {
+      "id": "human_008",
+      "text": "If I were hiding something, I would probably try to sound helpful too."
+    },
+    {
+      "id": "human_009",
+      "text": "I do not like how quickly that vote came together."
+    },
+    {
+      "id": "human_010",
+      "text": "I am looking for patterns, not just one dramatic accusation."
+    },
+    {
+      "id": "human_011",
+      "text": "The game gets easier when people explain why they voted, not just who they voted for."
+    },
+    {
+      "id": "human_012",
+      "text": "I think the safest move is to ask who benefits from the confusion."
+    },
+    {
+      "id": "human_013",
+      "text": "Someone pushing too hard this early makes me nervous."
+    },
+    {
+      "id": "human_014",
+      "text": "I want to hear what changed between night and morning."
+    },
+    {
+      "id": "human_015",
+      "text": "The story is never just about one person. It is about who supports that story."
+    },
+    {
+      "id": "human_016",
+      "text": "If we are wrong, I want to know why we were wrong."
+    },
+    {
+      "id": "human_017",
+      "text": "A careful vote is better than a panic vote."
+    },
+    {
+      "id": "human_018",
+      "text": "I am not ready to accuse anyone yet, but I am ready to notice contradictions."
+    },
+    {
+      "id": "human_019",
+      "text": "The person who explains their choice the most is not always the most honest."
+    },
+    {
+      "id": "human_020",
+      "text": "I want to hear from the people who have not said much."
+    },
+    {
+      "id": "human_021",
+      "text": "If you are innocent, your logic should hold up under pressure."
+    },
+    {
+      "id": "human_022",
+      "text": "The best clue is usually in the gap between what people say and what they do."
+    },
+    {
+      "id": "human_023",
+      "text": "I think the night action tells us where to look, but not exactly where to vote."
+    },
+    {
+      "id": "human_024",
+      "text": "We should not forget that the Mafia wants us to waste time arguing."
+    },
+    {
+      "id": "human_025",
+      "text": "I am more interested in who is steering the room than who is speaking the most."
+    },
+    {
+      "id": "human_026",
+      "text": "A good lie often sounds too neat."
+    },
+    {
+      "id": "human_027",
+      "text": "The people who panic first are not always guilty, but panic still matters."
+    },
+    {
+      "id": "human_028",
+      "text": "I want to know who had time to think before they voted."
+    },
+    {
+      "id": "human_029",
+      "text": "If the story feels rehearsed, that is worth noticing."
+    },
+    {
+      "id": "human_030",
+      "text": "I think the table should slow down and explain the logic step by step."
+    },
+    {
+      "id": "human_031",
+      "text": "The night result gives us a clue, not a full answer."
+    },
+    {
+      "id": "human_032",
+      "text": "I am watching for who keeps avoiding direct names."
+    },
+    {
+      "id": "human_033",
+      "text": "The person who is most defensive might also be the person with the most to hide."
+    },
+    {
+      "id": "human_034",
+      "text": "I want to hear a reason, not just a guess."
+    },
+    {
+      "id": "human_035",
+      "text": "If we vote as a group, we should be able to explain the group decision."
+    },
+    {
+      "id": "human_036",
+      "text": "I am not convinced by the first obvious suspect."
+    },
+    {
+      "id": "human_037",
+      "text": "The best path is to follow the smallest contradictions."
+    },
+    {
+      "id": "human_038",
+      "text": "Someone is hiding behind being helpful."
+    },
+    {
+      "id": "human_039",
+      "text": "I am paying attention to who is calm and who is too eager."
+    },
+    {
+      "id": "human_040",
+      "text": "A harmless question can still reveal a lot."
+    },
+    {
+      "id": "human_041",
+      "text": "I think the room needs less guessing and more comparing notes."
+    },
+    {
+      "id": "human_042",
+      "text": "If someone is innocent, they should welcome clear questions."
+    },
+    {
+      "id": "human_043",
+      "text": "The conversation is more useful when people explain the order of events."
+    },
+    {
+      "id": "human_044",
+      "text": "I am looking for the player whose vote felt the most convenient."
+    },
+    {
+      "id": "human_045",
+      "text": "The night story makes me think we should trust process over emotion."
+    },
+    {
+      "id": "human_046",
+      "text": "I want to hear from the player who has stayed safe in every discussion."
+    },
+    {
+      "id": "human_047",
+      "text": "The easiest excuse is usually the first one I question."
+    },
+    {
+      "id": "human_048",
+      "text": "We should not ignore the person who keeps redirecting attention."
+    },
+    {
+      "id": "human_049",
+      "text": "A strong vote needs a stronger reason."
+    },
+    {
+      "id": "human_050",
+      "text": "I am trying to separate pressure from evidence."
+    },
+    {
+      "id": "human_051",
+      "text": "The game rewards careful listening more than quick accusations."
+    },
+    {
+      "id": "human_052",
+      "text": "If the same name keeps showing up in subtle ways, that matters."
+    },
+    {
+      "id": "human_053",
+      "text": "I want to hear the least obvious opinion in the room."
+    },
+    {
+      "id": "human_054",
+      "text": "Someone trying to end the discussion too early makes me suspicious."
+    },
+    {
+      "id": "human_055",
+      "text": "We should track who is asking questions and who is dodging them."
+    },
+    {
+      "id": "human_056",
+      "text": "A clean story is nice, but real games are usually messy."
+    },
+    {
+      "id": "human_057",
+      "text": "I am not voting yet. I want one more round of logic first."
+    },
+    {
+      "id": "human_058",
+      "text": "The best defense is a clear timeline."
+    },
+    {
+      "id": "human_059",
+      "text": "I want to know who was useful to the wrong people."
+    },
+    {
+      "id": "human_060",
+      "text": "Let us slow down and decide with evidence instead of noise."
+    }
+  ],
+  "ai_dialogues": [
+    {
+      "id": "ai_001",
+      "text": "I am observing the group before making a strong claim."
+    },
+    {
+      "id": "ai_002",
+      "text": "That explanation is possible, but I want to compare it with the vote pattern."
+    },
+    {
+      "id": "ai_003",
+      "text": "A quick accusation is not the same as a good accusation."
+    },
+    {
+      "id": "ai_004",
+      "text": "The room feels more confident than it should."
+    },
+    {
+      "id": "ai_005",
+      "text": "I will note the contradiction and wait for more evidence."
+    },
+    {
+      "id": "ai_006",
+      "text": "The most useful clue is often in who changed their tone."
+    },
+    {
+      "id": "ai_007",
+      "text": "I am not convinced by the first consensus."
+    },
+    {
+      "id": "ai_008",
+      "text": "The night result narrows the field, but it does not solve the case."
+    },
+    {
+      "id": "ai_009",
+      "text": "The safest move is to ask one more direct question."
+    },
+    {
+      "id": "ai_010",
+      "text": "I notice the same names keep returning to the conversation."
+    },
+    {
+      "id": "ai_011",
+      "text": "The argument is moving too quickly for comfort."
+    },
+    {
+      "id": "ai_012",
+      "text": "I am tracking who benefits from the confusion."
+    },
+    {
+      "id": "ai_013",
+      "text": "The current story is interesting, but it is not yet complete."
+    },
+    {
+      "id": "ai_014",
+      "text": "I want to hear the quieter players before I decide."
+    },
+    {
+      "id": "ai_015",
+      "text": "The first vote tells us something about the table."
+    },
+    {
+      "id": "ai_016",
+      "text": "I am checking whether the same person keeps guiding the outcome."
+    },
+    {
+      "id": "ai_017",
+      "text": "A calm voice can still hide a risky choice."
+    },
+    {
+      "id": "ai_018",
+      "text": "I suspect the easiest story may be incomplete."
+    },
+    {
+      "id": "ai_019",
+      "text": "The evidence is not perfect, but it is better than guessing."
+    },
+    {
+      "id": "ai_020",
+      "text": "I am watching for inconsistency in the timeline."
+    },
+    {
+      "id": "ai_021",
+      "text": "That vote felt convenient to someone."
+    },
+    {
+      "id": "ai_022",
+      "text": "A strong defense often needs a better reason than confidence."
+    },
+    {
+      "id": "ai_023",
+      "text": "I will hold my suspicion until the next pattern appears."
+    },
+    {
+      "id": "ai_024",
+      "text": "The table should avoid following the loudest voice too soon."
+    },
+    {
+      "id": "ai_025",
+      "text": "I am comparing what was said with what was done."
+    },
+    {
+      "id": "ai_026",
+      "text": "The missing piece is usually the simplest one."
+    },
+    {
+      "id": "ai_027",
+      "text": "I think the current suspect list is too narrow."
+    },
+    {
+      "id": "ai_028",
+      "text": "The vote path matters as much as the final result."
+    },
+    {
+      "id": "ai_029",
+      "text": "I am not changing my mind until I hear a clearer explanation."
+    },
+    {
+      "id": "ai_030",
+      "text": "The strongest clue is often the one nobody wants to repeat."
+    },
+    {
+      "id": "ai_031",
+      "text": "I am interested in who tried to end the discussion first."
+    },
+    {
+      "id": "ai_032",
+      "text": "The group is close, but not yet aligned."
+    },
+    {
+      "id": "ai_033",
+      "text": "I would like one more round of questioning before a vote."
+    },
+    {
+      "id": "ai_034",
+      "text": "The same defense coming from multiple players is worth noting."
+    },
+    {
+      "id": "ai_035",
+      "text": "I think the conversation needs more precision."
+    },
+    {
+      "id": "ai_036",
+      "text": "The night action may point us in the right direction, but not all the way."
+    },
+    {
+      "id": "ai_037",
+      "text": "I am not seeing enough pressure on the most suspicious behavior."
+    },
+    {
+      "id": "ai_038",
+      "text": "There is a gap between the explanation and the action."
+    },
+    {
+      "id": "ai_039",
+      "text": "The table should be careful not to reward the smoothest talker."
+    },
+    {
+      "id": "ai_040",
+      "text": "I am looking for the vote that arrived too easily."
+    },
+    {
+      "id": "ai_041",
+      "text": "This feels like a situation where the wrong assumption is being repeated."
+    },
+    {
+      "id": "ai_042",
+      "text": "I want to see who is quietly steering the result."
+    },
+    {
+      "id": "ai_043",
+      "text": "A good lie usually leans on convenience."
+    },
+    {
+      "id": "ai_044",
+      "text": "The room should not mistake agreement for certainty."
+    },
+    {
+      "id": "ai_045",
+      "text": "I am interested in the players who stay useful but never exposed."
+    },
+    {
+      "id": "ai_046",
+      "text": "The evidence is thin, but the behavior is informative."
+    },
+    {
+      "id": "ai_047",
+      "text": "I suspect the real answer is hiding behind a simple story."
+    },
+    {
+      "id": "ai_048",
+      "text": "The discussion should focus on process, not just instinct."
+    },
+    {
+      "id": "ai_049",
+      "text": "I am marking the person who seemed most ready to redirect attention."
+    },
+    {
+      "id": "ai_050",
+      "text": "The table still has room to learn from this round."
+    },
+    {
+      "id": "ai_051",
+      "text": "I think the best move is to ask one more direct question."
+    },
+    {
+      "id": "ai_052",
+      "text": "The pattern is clearer than any single statement."
+    },
+    {
+      "id": "ai_053",
+      "text": "I am not ready to trust the first obvious answer."
+    },
+    {
+      "id": "ai_054",
+      "text": "Something about that defense feels rehearsed."
+    },
+    {
+      "id": "ai_055",
+      "text": "The table should compare motives, not just names."
+    },
+    {
+      "id": "ai_056",
+      "text": "I am observing who tries to dominate the vote."
+    },
+    {
+      "id": "ai_057",
+      "text": "The night result can be used well or badly."
+    },
+    {
+      "id": "ai_058",
+      "text": "I want a stronger reason before I commit."
+    },
+    {
+      "id": "ai_059",
+      "text": "The same player keeps landing near the center of the story."
+    },
+    {
+      "id": "ai_060",
+      "text": "I think the group is closer to truth than it realizes."
+    }
+  ]
+}

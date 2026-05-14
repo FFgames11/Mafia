@@ -59,10 +59,8 @@ function createLobbyCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase()
 }
 
-function chooseHumanTeamRole() {
-  const availableTeams: PlayerRole[] = ['mafia', 'detective', 'villager']
-
-  return availableTeams[Math.floor(Math.random() * availableTeams.length)]
+function chooseHumanTeamRole(): PlayerRole {
+  return 'detective'
 }
 
 function createBotRoleDeck(humanTeamRole: PlayerRole) {
@@ -105,6 +103,8 @@ function createBaseState(
   players: Omit<Player, 'role' | 'status'>[],
   humanTeamRole = chooseHumanTeamRole(),
 ): GameState {
+  const assignedPlayers = assignRoles(players, humanTeamRole)
+
   return {
     gameMaster: {
       name: 'The Computer',
@@ -118,13 +118,23 @@ function createBaseState(
     humanTeamRole,
     phase: 'setup',
     round: 1,
+    seatOrder: assignedPlayers.map((player) => player.id),
     pendingEliminationId: null,
+    sleepAcknowledgedIds: [],
+    mafiaVotes: [],
     lastEliminatedId: null,
+    detectiveVotes: [],
+    voteChoices: [],
+    tiedPlayerIds: [],
+    discussionSpeakerIndex: 0,
+    discussionPromptSpeakerId: null,
+    discussionPromptOptions: [],
+    discussionLog: [],
     investigationTargetId: null,
     investigationResult: null,
     dayStory: null,
     winner: null,
-    players: assignRoles(players, humanTeamRole),
+    players: assignedPlayers,
   }
 }
 
@@ -217,8 +227,24 @@ export function startGame(gameState: GameState, requestedByPlayerId: number): Ga
     return gameState
   }
 
-  return {
+  return randomizeSeating({
     ...gameState,
     phase: 'role-reveal',
+  })
+}
+
+function randomizeSeating(gameState: GameState): GameState {
+  const shuffledPlayerIds = shuffleItems(gameState.players.map((player) => player.id))
+  const seatByPlayerId = new Map(
+    shuffledPlayerIds.map((playerId, index) => [playerId, `Seat ${index + 1}`]),
+  )
+
+  return {
+    ...gameState,
+    seatOrder: shuffledPlayerIds,
+    players: gameState.players.map((player) => ({
+      ...player,
+      seat: seatByPlayerId.get(player.id) ?? player.seat,
+    })),
   }
 }
