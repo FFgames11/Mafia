@@ -1765,7 +1765,7 @@ onBeforeUnmount(() => {
     </section>
   </main>
 
-  <main v-else class="game-shell" :class="{ 'lobby-only-shell': isLobbyWaiting }">
+  <main v-else class="game-shell" :class="{ 'lobby-only-shell landing-menu-shell': isLobbyWaiting }">
     <section v-if="gameState.mode !== 'lobby' && !isGameStarted" class="hero-panel">
       <p class="eyebrow">Computer controlled Game Master</p>
       <h1>Mafia Nightfall</h1>
