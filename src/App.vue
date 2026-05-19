@@ -3,7 +3,6 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import storyCycles from './data/story-cycles.json'
 import {
-  advanceToIntroPhase,
   advanceToMafiaPhase,
   advanceToSleepPhase,
   advanceToSleepStoryPhase,
@@ -195,6 +194,26 @@ const narrationText = computed(() => {
 
 const localRoleLabel = computed(() => {
   return localPlayer.value ? roleLabels[localPlayer.value.role] : 'Unknown'
+})
+
+const roleRevealMessage = computed(() => {
+  if (localPlayer.value?.role === 'mafia') {
+    return 'You are Mafia.'
+  }
+
+  if (localPlayer.value?.role === 'detective') {
+    return 'You are Detective.'
+  }
+
+  return "There's a traitor among you"
+})
+
+const roleRevealPlayers = computed(() => {
+  const playersById = new Map(gameState.value.players.map((player) => [player.id, player]))
+
+  return gameState.value.seatOrder
+    .map((playerId) => playersById.get(playerId))
+    .filter((player): player is Player => Boolean(player))
 })
 
 const lastEliminatedName = computed(() => {
@@ -577,8 +596,8 @@ const gameMasterScreen = computed(() => {
     return {
       key: `role-reveal:${gameState.value.round}:${localPlayer.value?.id ?? 'unknown'}`,
       eyebrow: `Round ${gameState.value.round}`,
-      title: 'Your Role',
-      speech: `Your role is ${localRoleLabel.value}. Your partner has the same fate. Keep it secret.`,
+      title: roleRevealMessage.value,
+      speech: '',
       variant: 'role',
     }
   }
@@ -686,6 +705,29 @@ function getDisplayPlayerName(playerId: number | null) {
   return name
 }
 
+function getKnownRoleLabel(player: Player) {
+  if (localPlayer.value?.role === 'mafia' && player.role === 'mafia') {
+    return 'Mafia'
+  }
+
+  if (localPlayer.value?.role === 'detective' && player.role === 'detective') {
+    return 'Detective'
+  }
+
+  return ''
+}
+
+function getPlayerIcon(player: Player) {
+  const icons: Record<PlayerRole, string[]> = {
+    mafia: ['🥷', '🐶'],
+    detective: ['💀', '🕵️'],
+    villager: ['👾', '🦁', '🐱', '🐵'],
+  }
+  const pool = icons[player.role]
+
+  return pool[player.id % pool.length]
+}
+
 function isLocalModalDismissed(key: string) {
   return dismissedLocalModalKeys.value.has(key)
 }
@@ -757,10 +799,15 @@ async function continueAfterNextGate(modalKey: string, currentState = gameState.
   switch (nextState.phase) {
     case 'role-reveal':
       hasSeenRoleReveal.value = true
-      nextState = advanceToIntroPhase(nextState)
+      nextState = advanceToSleepPhase(nextState)
       break
     case 'intro':
-      nextState = advanceToSleepPhase(nextState)
+      nextState = {
+        ...nextState,
+        phase: 'role-reveal',
+        nextAcknowledgedIds: [],
+        nextAcknowledgements: {},
+      }
       break
     case 'sleep-story':
       nextState = advanceToMafiaPhase(nextState)
@@ -1858,14 +1905,39 @@ onBeforeUnmount(() => {
         <p class="eyebrow">{{ gameMasterScreen.eyebrow }}</p>
         <h2>{{ gameMasterScreen.title }}</h2>
 
-        <div class="game-master-dialogue">
+        <div v-if="gameState.phase !== 'role-reveal'" class="game-master-dialogue">
           <div class="game-master-avatar" aria-hidden="true">🎭</div>
           <div class="speech-bubble">
             <p>{{ gameMasterTypedText }}<span v-if="!isGameMasterTypingComplete" class="typing-caret"></span></p>
           </div>
         </div>
 
-        <template v-if="isGameMasterTypingComplete && canLocalInvestigate">
+        <div v-if="gameState.phase === 'role-reveal'" class="role-reveal-board">
+          <article
+            v-for="player in roleRevealPlayers"
+            :key="player.id"
+            class="role-reveal-player"
+          >
+            <strong :class="`known-role-${getKnownRoleLabel(player).toLowerCase() || 'hidden'}`">
+              {{ getKnownRoleLabel(player) }}
+            </strong>
+            <span class="role-reveal-icon">{{ getPlayerIcon(player) }}</span>
+            <p>{{ player.name }}</p>
+          </article>
+        </div>
+
+        <template v-if="gameState.phase === 'role-reveal' && isLocalNextVisible && localNextModalKey">
+          <button
+            type="button"
+            class="secondary-button"
+            :disabled="hasLocalNextAcknowledged"
+            @click="dismissLocalModal"
+          >
+            {{ nextButtonLabel }}
+          </button>
+        </template>
+
+        <template v-else-if="isGameMasterTypingComplete && canLocalInvestigate">
           <div class="target-grid detective-target-grid">
             <button
               v-for="player in detectiveTargets"

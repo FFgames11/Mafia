@@ -231,7 +231,7 @@ export function startGame(gameState: GameState, requestedByPlayerId: number): Ga
 
   return randomizeSeating({
     ...gameState,
-    phase: 'role-reveal',
+    phase: 'intro',
     nextAcknowledgedIds: [],
     nextAcknowledgements: {},
   })
