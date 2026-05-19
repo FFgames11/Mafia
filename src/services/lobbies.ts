@@ -1,6 +1,6 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { GameState, Player, PlayerKind } from '../game/types'
-import { supabase } from './supabase'
+import { getSupabaseClient, supabase } from './supabase'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000'
 
@@ -101,7 +101,8 @@ function mapLobbyState(
 }
 
 async function fetchLobbyRows(lobbyCode: string) {
-  const { data: lobby, error: lobbyError } = await supabase
+  const supabaseClient = getSupabaseClient()
+  const { data: lobby, error: lobbyError } = await supabaseClient
     .from('lobbies')
     .select('code,status,host_client_id,game_state')
     .eq('code', lobbyCode)
@@ -115,7 +116,7 @@ async function fetchLobbyRows(lobbyCode: string) {
     return null
   }
 
-  const { data: players, error: playersError } = await supabase
+  const { data: players, error: playersError } = await supabaseClient
     .from('lobby_players')
     .select('lobby_code,client_id,slot_number,display_name,kind,is_host,is_ready')
     .eq('lobby_code', lobbyCode)
@@ -178,7 +179,11 @@ export async function updateOnlineGameState(lobbyCode: string, gameState: GameSt
 export function subscribeToLobby(
   lobbyCode: string,
   onChange: () => void,
-): RealtimeChannel {
+): RealtimeChannel | null {
+  if (!supabase) {
+    return null
+  }
+
   return supabase
     .channel(`lobby:${lobbyCode}`)
     .on(
