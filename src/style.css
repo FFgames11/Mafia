@@ -150,11 +150,9 @@ button:focus-visible {
   position: relative;
   display: grid;
   place-items: center;
-  padding: clamp(1rem, 4vw, 3rem);
+  padding: clamp(1rem, 5vw, 4rem) 0;
   overflow: auto;
   min-height: calc(100vh - 6rem);
-  border: 1px solid var(--line);
-  border-radius: 34px;
   background:
     radial-gradient(circle at 18% 18%, rgba(169, 45, 36, 0.35), transparent 24rem),
     radial-gradient(circle at 82% 80%, rgba(214, 164, 79, 0.18), transparent 28rem),
@@ -167,13 +165,7 @@ button:focus-visible {
   display: grid;
   align-content: center;
   gap: clamp(1rem, 3vw, 1.7rem);
-  padding: clamp(1.25rem, 5vw, 4rem);
-  border: 1px solid rgba(255, 248, 235, 0.18);
-  border-radius: clamp(26px, 5vw, 48px);
-  background:
-    linear-gradient(130deg, rgba(255, 248, 235, 0.08), rgba(169, 45, 36, 0.1)),
-    rgba(8, 7, 6, 0.56);
-  box-shadow: var(--shadow);
+  padding: 0;
 }
 
 .game-master-stage h2 {
