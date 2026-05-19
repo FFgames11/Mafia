@@ -652,14 +652,6 @@ const lobbySlots = computed(() => {
   })
 })
 
-const seatedPlayers = computed(() => {
-  const playersById = new Map(gameState.value.players.map((player) => [player.id, player]))
-
-  return gameState.value.seatOrder
-    .map((playerId) => playersById.get(playerId))
-    .filter((player) => player !== undefined)
-})
-
 function chooseVsAiMode() {
   gameState.value = createVsAiGameState()
   screen.value = 'game'
@@ -949,6 +941,12 @@ async function selectMafiaTarget(targetId: number) {
   }
 
   gameState.value = chooseMafiaTarget(gameState.value, nextMafiaVoter.value.id, targetId)
+
+  if (canRunAutomatedGameAction.value && gameState.value.phase === 'mafia') {
+    await letMafiaAct()
+    return
+  }
+
   await persistCurrentGameState()
 }
 
@@ -979,6 +977,12 @@ async function selectDetectiveTarget(targetId: number) {
   }
 
   gameState.value = chooseDetectiveTarget(gameState.value, localPlayer.value.id, targetId)
+
+  if (canRunAutomatedGameAction.value && gameState.value.phase === 'detective') {
+    await letDetectivesAct()
+    return
+  }
+
   await persistCurrentGameState()
 }
 
@@ -2028,23 +2032,9 @@ onBeforeUnmount(() => {
         </template>
       </article>
 
-      <div class="player-grid game-player-grid">
-        <article
-          v-for="player in seatedPlayers"
-          :key="player.id"
-          class="player-card"
-          :class="[`role-${player.role}`, { eliminated: player.status === 'eliminated' }]"
-        >
-          <div>
-            <h3>{{ player.name }}</h3>
-            <p>{{ player.kind === 'human' ? 'Human' : 'AI' }}</p>
-          </div>
-          <strong>{{ player.status }}</strong>
-        </article>
-      </div>
     </section>
 
-    <section v-else class="players-section" aria-labelledby="players-heading">
+    <section v-if="!isGameStarted" class="players-section" aria-labelledby="players-heading">
       <div v-if="gameState.mode === 'lobby'" class="sticky-code-note">
         <span>Lobby Code</span>
         <strong>{{ gameState.lobbyCode }}</strong>
