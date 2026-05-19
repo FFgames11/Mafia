@@ -1045,6 +1045,38 @@ h3 {
   gap: 1rem;
 }
 
+.lobby-player-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.lobby-player-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(5rem, 0.65fr) minmax(7rem, 0.75fr);
+  align-items: center;
+  gap: 1rem;
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 248, 235, 0.12);
+  color: var(--muted);
+}
+
+.lobby-player-row:last-child {
+  border-bottom: 0;
+}
+
+.lobby-player-row span:first-child {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.lobby-player-row strong {
+  color: var(--gold);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .player-card {
   display: grid;
   min-height: 112px;
@@ -1138,6 +1170,12 @@ h3 {
   .player-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.6rem;
+  }
+
+  .lobby-player-row {
+    grid-template-columns: minmax(0, 1.2fr) minmax(4rem, 0.55fr) minmax(6rem, 0.65fr);
+    gap: 0.6rem;
+    padding: 0.7rem 0.35rem;
   }
 
   .player-card {

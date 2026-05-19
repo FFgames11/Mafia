@@ -2046,26 +2046,26 @@ onBeforeUnmount(() => {
         <h2 id="players-heading">Starting Player Board</h2>
       </div>
 
-      <div class="player-grid">
+      <div :class="gameState.mode === 'lobby' ? 'lobby-player-list' : 'player-grid'">
         <article
           v-for="slot in lobbySlots"
           :key="slot.id"
-          class="player-card"
-          :class="slot.player ? `role-${slot.player.role}` : 'empty-seat'"
+          :class="[
+            gameState.mode === 'lobby' ? 'lobby-player-row' : 'player-card',
+            slot.player ? `role-${slot.player.role}` : 'empty-seat',
+          ]"
         >
-          <div>
-            <h3>{{ slot.player?.name ?? 'Waiting for other player' }}</h3>
-            <p v-if="slot.player">{{ slot.player.kind === 'human' ? 'Human' : 'AI' }}</p>
-          </div>
+          <span>{{ slot.player?.name ?? 'Waiting for other player' }}</span>
+          <span>{{ slot.player ? (slot.player.kind === 'human' ? 'Player' : 'AI') : '-' }}</span>
           <strong>
             {{
               !slot.player
-                ? 'empty'
+                ? 'Not Ready'
                 : slot.player.isHost
-                  ? 'host'
+                  ? 'Host'
                   : slot.player.isReady
-                    ? 'ready'
-                    : 'not ready'
+                    ? 'Ready'
+                    : 'Not Ready'
             }}
           </strong>
         </article>
