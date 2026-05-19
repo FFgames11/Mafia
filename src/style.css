@@ -1122,6 +1122,18 @@ h3 {
   text-transform: uppercase;
 }
 
+.lobby-player-status.is-ready {
+  color: #2f8f4e;
+}
+
+.lobby-player-status.is-not-ready {
+  color: #8c8c8c;
+}
+
+.lobby-player-status.is-host {
+  color: #6a4d2b;
+}
+
 .player-card {
   display: grid;
   min-height: 112px;

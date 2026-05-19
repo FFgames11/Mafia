@@ -2057,7 +2057,18 @@ onBeforeUnmount(() => {
         >
           <span>{{ slot.player?.name ?? 'Waiting for other player' }}</span>
           <span>{{ slot.player ? (slot.player.kind === 'human' ? 'Player' : 'AI') : '-' }}</span>
-          <strong>
+          <strong
+            :class="[
+              'lobby-player-status',
+              !slot.player
+                ? 'is-not-ready'
+                : slot.player.isHost
+                  ? 'is-host'
+                  : slot.player.isReady
+                    ? 'is-ready'
+                    : 'is-not-ready',
+            ]"
+          >
             {{
               !slot.player
                 ? 'Not Ready'
