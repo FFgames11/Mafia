@@ -1024,12 +1024,6 @@ async function selectDetectiveTarget(targetId: number) {
   }
 
   gameState.value = chooseDetectiveTarget(gameState.value, localPlayer.value.id, targetId)
-
-  if (canRunAutomatedGameAction.value && gameState.value.phase === 'detective') {
-    await letDetectivesAct()
-    return
-  }
-
   await persistCurrentGameState()
 }
 
