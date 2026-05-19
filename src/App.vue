@@ -1943,10 +1943,11 @@ onBeforeUnmount(() => {
               v-for="player in detectiveTargets"
               :key="player.id"
               type="button"
-              class="target-button"
+              class="target-button target-player-button"
               @click="selectDetectiveTarget(player.id)"
             >
-              {{ player.name }}
+              <span class="target-player-icon">{{ getPlayerIcon(player) }}</span>
+              <span>{{ player.name }}</span>
             </button>
           </div>
         </template>
