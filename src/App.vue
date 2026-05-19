@@ -1969,12 +1969,20 @@ onBeforeUnmount(() => {
           </div>
         </template>
 
-        <p
-          v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && detectiveVoteSummary"
-          class="result-text"
-        >
-          {{ detectiveVoteSummary }}.
-        </p>
+        <template v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && detectiveVoteSummary">
+          <p class="result-text">
+            {{ detectiveVoteSummary }}.
+          </p>
+          <button
+            v-if="isLocalNextVisible && localNextModalKey"
+            type="button"
+            class="secondary-button"
+            :disabled="hasLocalNextAcknowledged"
+            @click="dismissLocalModal"
+          >
+            {{ nextButtonLabel }}
+          </button>
+        </template>
 
         <p
           v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && hasLocalDetectiveVoted && gameState.investigationTargetId === null"
