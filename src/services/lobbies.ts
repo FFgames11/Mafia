@@ -1,6 +1,6 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { GameState, Player, PlayerKind } from '../game/types'
-import { getSupabaseClient, supabase } from './supabase'
+import { supabase } from './supabase'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000'
 
@@ -77,9 +77,23 @@ function mapLobbyState(
   fallbackState: GameState,
 ): GameState {
   if (lobby.game_state) {
+    const gamePlayersById = new Map(lobby.game_state.players.map((player) => [player.id, player]))
+    const syncedPlayers = players
+      .map((player) => {
+        const gamePlayer = gamePlayersById.get(player.slot_number)
+
+        return {
+          ...mapPlayer(player, gamePlayer?.role ?? 'villager'),
+          status: gamePlayer?.status ?? 'alive',
+          role: gamePlayer?.role ?? 'villager',
+        }
+      })
+      .sort((first, second) => first.id - second.id)
+
     return {
       ...lobby.game_state,
-      seatOrder: lobby.game_state.seatOrder ?? lobby.game_state.players.map((player) => player.id),
+      players: syncedPlayers,
+      seatOrder: lobby.game_state.seatOrder ?? syncedPlayers.map((player) => player.id),
       localPlayerId,
     }
   }
@@ -101,36 +115,7 @@ function mapLobbyState(
 }
 
 async function fetchLobbyRows(lobbyCode: string) {
-  const supabaseClient = getSupabaseClient()
-  const { data: lobby, error: lobbyError } = await supabaseClient
-    .from('lobbies')
-    .select('code,status,host_client_id,game_state')
-    .eq('code', lobbyCode)
-    .maybeSingle<LobbyRow>()
-
-  if (lobbyError) {
-    throw lobbyError
-  }
-
-  if (!lobby) {
-    return null
-  }
-
-  const { data: players, error: playersError } = await supabaseClient
-    .from('lobby_players')
-    .select('lobby_code,client_id,slot_number,display_name,kind,is_host,is_ready')
-    .eq('lobby_code', lobbyCode)
-    .order('slot_number')
-    .returns<LobbyPlayerRow[]>()
-
-  if (playersError) {
-    throw playersError
-  }
-
-  return {
-    lobby,
-    players: players ?? [],
-  }
+  return apiRequest<{ lobby: LobbyRow, players: LobbyPlayerRow[] }>(`/api/lobbies/${lobbyCode}`)
 }
 
 export async function createOnlineLobby() {

@@ -53,6 +53,8 @@ const lobbyCodeInput = ref('')
 const isHelpOpen = ref(false)
 const lobbyError = ref('')
 const lobbyChannel = ref<RealtimeChannel | null>(null)
+const lobbyRefreshIntervalId = ref<number | null>(null)
+const isRefreshingLobby = ref(false)
 const isLobbyBusy = ref(false)
 const roleRevealTimeoutId = ref<number | null>(null)
 const introAdvanceTimeoutId = ref<number | null>(null)
@@ -1059,11 +1061,21 @@ async function persistCurrentGameState() {
 
 function unsubscribeCurrentLobby() {
   if (!lobbyChannel.value) {
+    if (lobbyRefreshIntervalId.value !== null) {
+      window.clearInterval(lobbyRefreshIntervalId.value)
+      lobbyRefreshIntervalId.value = null
+    }
+
     return
   }
 
   lobbyChannel.value.unsubscribe()
   lobbyChannel.value = null
+
+  if (lobbyRefreshIntervalId.value !== null) {
+    window.clearInterval(lobbyRefreshIntervalId.value)
+    lobbyRefreshIntervalId.value = null
+  }
 }
 
 function subscribeCurrentLobby() {
@@ -1074,9 +1086,29 @@ function subscribeCurrentLobby() {
   }
 
   lobbyChannel.value = subscribeToLobby(gameState.value.lobbyCode, async () => {
+    await refreshCurrentLobby()
+  })
+  lobbyRefreshIntervalId.value = window.setInterval(() => {
+    void refreshCurrentLobby()
+  }, 2000)
+  void refreshCurrentLobby()
+}
+
+async function refreshCurrentLobby() {
+  if (isRefreshingLobby.value || !gameState.value.lobbyCode) {
+    return
+  }
+
+  isRefreshingLobby.value = true
+
+  try {
     gameState.value = await refreshOnlineLobby(gameState.value)
     scheduleRoleRevealDismissal()
-  })
+  } catch (error) {
+    console.error('Lobby refresh failed:', error)
+  } finally {
+    isRefreshingLobby.value = false
+  }
 }
 
 function scheduleRoleRevealDismissal() {

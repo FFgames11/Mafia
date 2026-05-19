@@ -28,7 +28,17 @@ export async function GET(request: Request, context: RouteContext) {
       return jsonResponse(request, { error: 'Lobby not found.' }, { status: 404 })
     }
 
-    return jsonResponse(request, { lobby })
+    const { data: players, error: playersError } = await supabase
+      .from('lobby_players')
+      .select('lobby_code,client_id,slot_number,display_name,kind,is_host,is_ready')
+      .eq('lobby_code', lobbyCode)
+      .order('slot_number')
+
+    if (playersError) {
+      throw playersError
+    }
+
+    return jsonResponse(request, { lobby, players: players ?? [] })
   } catch (error) {
     return errorResponse(request, error)
   }
