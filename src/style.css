@@ -406,63 +406,127 @@ h3 {
   width: 100%;
   min-height: 100vh;
   padding: 1rem;
-  background: #1f1f1f;
+  background:
+    radial-gradient(circle at 50% 15%, rgba(238, 208, 151, 0.15), transparent 18rem),
+    radial-gradient(circle at 20% 80%, rgba(117, 24, 21, 0.38), transparent 18rem),
+    linear-gradient(145deg, #171210, #060606 68%);
 }
 
 .landing-menu-panel {
-  width: min(505px, calc(100vw - 2rem));
-  min-height: min(585px, calc(100vh - 2rem));
+  width: min(540px, calc(100vw - 2rem));
+  min-height: min(640px, calc(100vh - 2rem));
   place-self: center;
   align-content: center;
   justify-items: center;
-  gap: 2.1rem;
+  gap: 1.35rem;
   padding: clamp(2rem, 7vw, 4rem);
-  border: 0;
-  border-radius: 78px;
-  background: #d9d9d9;
-  box-shadow: none;
+  border: 1px solid rgba(255, 238, 205, 0.38);
+  border-radius: 72px;
+  background:
+    linear-gradient(160deg, rgba(250, 236, 206, 0.96), rgba(188, 166, 137, 0.92)),
+    #dac9ad;
+  box-shadow:
+    0 35px 90px rgba(0, 0, 0, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -25px 60px rgba(77, 43, 24, 0.12);
 }
 
 .landing-menu-panel::before,
 .landing-menu-panel::after {
-  display: none;
+  display: block;
+  pointer-events: none;
+}
+
+.landing-menu-panel::before {
+  inset: 1.2rem;
+  width: auto;
+  height: auto;
+  border: 1px solid rgba(95, 70, 49, 0.18);
+  border-radius: 56px;
+  background:
+    radial-gradient(circle at 80% 15%, rgba(255, 255, 255, 0.32), transparent 12rem),
+    repeating-linear-gradient(
+      135deg,
+      rgba(87, 62, 43, 0.045) 0 1px,
+      transparent 1px 13px
+    );
+}
+
+.landing-menu-panel::after {
+  inset: auto auto 2rem 2rem;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(112, 28, 24, 0.22), transparent 70%);
+  filter: blur(1px);
 }
 
 .landing-menu-panel h1 {
   max-width: none;
-  color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(5rem, 19vw, 7.75rem);
-  font-weight: 400;
-  line-height: 0.9;
+  color: #fff8ea;
+  font-size: clamp(5.2rem, 18vw, 8rem);
+  font-weight: 700;
+  line-height: 0.82;
   letter-spacing: -0.08em;
+  text-shadow:
+    0 2px 0 rgba(85, 65, 48, 0.26),
+    0 18px 36px rgba(68, 35, 22, 0.22);
+}
+
+.landing-kicker {
+  color: rgba(59, 44, 34, 0.78);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.landing-subtitle {
+  max-width: 28ch;
+  margin: -0.25rem 0 0.65rem;
+  color: rgba(49, 38, 31, 0.72);
+  font-size: 1.05rem;
+  line-height: 1.35;
+  text-align: center;
 }
 
 .landing-menu-panel .menu-actions {
-  width: min(377px, 100%);
+  width: min(390px, 100%);
   display: grid;
-  gap: 2.15rem;
+  gap: 1rem;
   margin-top: 0;
 }
 
 .landing-menu-panel button {
   width: 100%;
-  min-height: 90px;
-  padding: 0.4rem 1rem 0.75rem;
-  border-radius: 24px;
-  color: #ffffff;
-  background: #919191;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(4rem, 14vw, 4.7rem);
-  font-weight: 400;
-  line-height: 0.9;
-  letter-spacing: -0.05em;
+  min-height: 78px;
+  padding: 0.8rem 1.2rem 1rem;
+  border: 1px solid rgba(255, 248, 235, 0.26);
+  border-radius: 25px;
+  color: #fff8ea;
+  background:
+    linear-gradient(180deg, rgba(117, 117, 117, 0.98), rgba(86, 86, 86, 0.98));
+  box-shadow:
+    0 16px 32px rgba(63, 45, 31, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-size: clamp(2.35rem, 9vw, 4rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
   text-transform: none;
 }
 
 .landing-menu-panel .secondary-button {
-  border: 0;
-  background: #919191;
+  border: 1px solid rgba(255, 248, 235, 0.2);
+  background:
+    linear-gradient(180deg, rgba(104, 104, 104, 0.94), rgba(75, 75, 75, 0.96));
+}
+
+.landing-menu-panel button:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 22px 42px rgba(63, 45, 31, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .menu-actions {
@@ -1115,11 +1179,16 @@ h3 {
 @media (max-width: 520px) {
   .landing-menu-panel {
     min-height: min(540px, calc(100vh - 2rem));
-    border-radius: 54px;
+    border-radius: 46px;
+    gap: 1rem;
+  }
+
+  .landing-menu-panel::before {
+    border-radius: 34px;
   }
 
   .landing-menu-panel button {
-    min-height: 76px;
+    min-height: 68px;
     border-radius: 20px;
   }
 

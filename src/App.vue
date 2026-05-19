@@ -1676,7 +1676,9 @@ onBeforeUnmount(() => {
 
   <main v-if="screen === 'landing'" class="menu-shell landing-menu-shell">
     <section class="menu-panel landing-menu-panel" aria-labelledby="landing-title">
+      <p class="landing-kicker">Nightfall Table</p>
       <h1 id="landing-title">Mafia</h1>
+      <p class="landing-subtitle">A quiet town. Hidden roles. One vote at a time.</p>
 
       <div class="menu-actions" aria-label="Main menu">
         <button type="button" @click="openGame">Play</button>
