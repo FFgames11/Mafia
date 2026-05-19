@@ -278,12 +278,11 @@ const nextMafiaVoter = computed(() => {
   })
 })
 
-const mafiaVoteSummary = computed(() => {
+const mafiaVoteSummaryLines = computed(() => {
   return gameState.value.mafiaVotes
     .map((vote) => {
-      return `${getDisplayPlayerName(vote.mafiaId)} chose ${getDisplayPlayerName(vote.targetId)}`
+      return `${getPlayerChoiceLabel(vote.mafiaId)} chose ${getPlayerChoiceLabel(vote.targetId)}`
     })
-    .join('. ')
 })
 
 const detectiveTargets = computed(() => {
@@ -294,12 +293,11 @@ const detectiveTargets = computed(() => {
   return getDetectiveTargets(gameState.value, localPlayer.value.id)
 })
 
-const detectiveVoteSummary = computed(() => {
+const detectiveVoteSummaryLines = computed(() => {
   return gameState.value.detectiveVotes
     .map((vote) => {
-      return `${getDisplayPlayerName(vote.detectiveId)} chose ${getDisplayPlayerName(vote.targetId)}`
+      return `${getPlayerChoiceLabel(vote.detectiveId)} chose ${getPlayerChoiceLabel(vote.targetId)}`
     })
-    .join('. ')
 })
 
 const investigationRead = computed(() => {
@@ -733,6 +731,16 @@ function getDisplayPlayerName(playerId: number | null) {
 
 function getPlayerById(playerId: number | null) {
   return gameState.value.players.find((player) => player.id === playerId) ?? null
+}
+
+function getPlayerChoiceLabel(playerId: number | null) {
+  const player = getPlayerById(playerId)
+
+  if (!player) {
+    return getPlayerName(gameState.value, playerId)
+  }
+
+  return `${getPlayerIcon(player)} ${player.name}`
 }
 
 function getKnownRoleLabel(player: Player) {
@@ -1998,10 +2006,12 @@ onBeforeUnmount(() => {
           </div>
         </template>
 
-        <template v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && detectiveVoteSummary">
-          <p class="result-text">
-            {{ detectiveVoteSummary }}.
-          </p>
+        <template v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && detectiveVoteSummaryLines.length">
+          <div class="result-lines">
+            <p v-for="line in detectiveVoteSummaryLines" :key="line" class="result-text">
+              {{ line }}.
+            </p>
+          </div>
           <button
             v-if="isLocalNextVisible && localNextModalKey"
             type="button"
@@ -2020,12 +2030,14 @@ onBeforeUnmount(() => {
           Investigation submitted. Waiting for your partner.
         </p>
 
-        <p
-          v-else-if="isGameMasterTypingComplete && canSeeMafiaInfo && mafiaVoteSummary"
-          class="result-text"
+        <div
+          v-else-if="isGameMasterTypingComplete && canSeeMafiaInfo && mafiaVoteSummaryLines.length"
+          class="result-lines"
         >
-          {{ mafiaVoteSummary }}.
-        </p>
+          <p v-for="line in mafiaVoteSummaryLines" :key="line" class="result-text">
+            {{ line }}.
+          </p>
+        </div>
 
         <template v-else-if="gameState.phase === 'sleep'">
           <button

@@ -206,6 +206,12 @@ button:focus-visible {
   font-size: clamp(1rem, 3vw, 1.25rem);
 }
 
+.result-lines {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+}
+
 .game-master-avatar {
   width: auto;
   height: auto;
