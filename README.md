@@ -42,12 +42,31 @@ Create `backend/.env.local`:
 ```env
 SUPABASE_URL=https://your-project-id.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
+ALLOWED_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
 ```
 
 The Vue client defaults to `http://127.0.0.1:3000` for backend API calls. Override it in root `.env.local` if needed:
 
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:3000
+```
+
+## Vercel Deployment
+
+Deploy the Next.js backend from the `backend/` root and set:
+
+```env
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+ALLOWED_ORIGINS=https://mafia-ived.vercel.app
+```
+
+Deploy the Vue frontend from the repo root and set:
+
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_API_BASE_URL=https://your-backend-vercel-url.vercel.app
 ```
 
 ## Current Base

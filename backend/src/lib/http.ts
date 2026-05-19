@@ -4,7 +4,16 @@ const allowedOrigins = new Set([
   'http://127.0.0.1:5173',
   'http://localhost:5173',
   'http://192.168.0.50:5173',
+  'https://mafia-ived.vercel.app',
+  ...getConfiguredOrigins(),
 ])
+
+function getConfiguredOrigins() {
+  return (process.env.ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+}
 
 export function getCorsHeaders(request: Request) {
   const origin = request.headers.get('origin') ?? ''
