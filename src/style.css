@@ -147,13 +147,14 @@ button:focus-visible {
 }
 
 .game-master-screen {
-  position: fixed;
-  z-index: 38;
-  inset: 0;
+  position: relative;
   display: grid;
   place-items: center;
   padding: clamp(1rem, 4vw, 3rem);
   overflow: auto;
+  min-height: calc(100vh - 6rem);
+  border: 1px solid var(--line);
+  border-radius: 34px;
   background:
     radial-gradient(circle at 18% 18%, rgba(169, 45, 36, 0.35), transparent 24rem),
     radial-gradient(circle at 82% 80%, rgba(214, 164, 79, 0.18), transparent 28rem),
@@ -162,7 +163,7 @@ button:focus-visible {
 
 .game-master-stage {
   width: min(980px, 100%);
-  min-height: min(720px, calc(100vh - 2rem));
+  min-height: min(680px, calc(100vh - 8rem));
   display: grid;
   align-content: center;
   gap: clamp(1rem, 3vw, 1.7rem);

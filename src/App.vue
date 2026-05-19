@@ -72,6 +72,7 @@ const isSleepGateAdvanceBusy = ref(false)
 const gameMasterTypedText = ref('')
 const isGameMasterTypingComplete = ref(false)
 const gameMasterTypingIntervalId = ref<number | null>(null)
+const currentGameMasterSceneKey = ref('')
 
 const roleCounts = computed(() => {
   return gameState.value.players.reduce<Record<PlayerRole, number>>(
@@ -574,6 +575,7 @@ const isRoleRevealModalOpen = computed(() => {
 const gameMasterScreen = computed(() => {
   if (isRoleRevealModalOpen.value) {
     return {
+      key: `role-reveal:${gameState.value.round}:${localPlayer.value?.id ?? 'unknown'}`,
       eyebrow: `Round ${gameState.value.round}`,
       title: 'Your Role',
       speech: `Your role is ${localRoleLabel.value}. Your partner has the same fate. Keep it secret.`,
@@ -583,6 +585,7 @@ const gameMasterScreen = computed(() => {
 
   if (isDetectiveResultModalOpen.value) {
     return {
+      key: `detective-result:${gameState.value.round}:${gameState.value.investigationTargetId}`,
       eyebrow: 'Game Master Result',
       title: investigationTargetName.value,
       speech: `The Game Master quietly says this person looks like ${investigationRead.value}.`,
@@ -592,6 +595,7 @@ const gameMasterScreen = computed(() => {
 
   if (isNightDeathIntroModalOpen.value) {
     return {
+      key: `night-death-intro:${gameState.value.round}:${gameState.value.lastEliminatedId}`,
       eyebrow: 'Morning News',
       title: 'After morning arose',
       speech: 'After morning arose, one member did not survive and was found lying on the ground.',
@@ -601,6 +605,7 @@ const gameMasterScreen = computed(() => {
 
   if (isNightDeathModalOpen.value) {
     return {
+      key: `night-death:${gameState.value.round}:${gameState.value.lastEliminatedId}`,
       eyebrow: 'Morning News',
       title: 'A member is gone',
       speech: `${lastEliminatedName.value} did not survive the night.`,
@@ -610,6 +615,7 @@ const gameMasterScreen = computed(() => {
 
   if (isStoryModalOpen.value) {
     return {
+      key: `story:${gameState.value.phase}:${gameState.value.round}`,
       eyebrow: `Round ${gameState.value.round}`,
       title: phaseTitle.value,
       speech: narrationText.value,
@@ -619,6 +625,7 @@ const gameMasterScreen = computed(() => {
 
   if (isVoteEliminationModalOpen.value) {
     return {
+      key: `vote-elimination:${gameState.value.round}:${gameState.value.pendingEliminationId}`,
       eyebrow: 'Voting Elimination',
       title: 'Town Verdict',
       speech: `${getDisplayPlayerName(gameState.value.pendingEliminationId)} was eliminated by the town's vote.`,
@@ -1268,15 +1275,30 @@ function clearGameMasterTyping() {
   }
 }
 
-function startGameMasterTyping() {
+function startGameMasterTyping(force = false) {
+  const scene = gameMasterScreen.value
+
+  if (!scene) {
+    currentGameMasterSceneKey.value = ''
+    gameMasterTypedText.value = ''
+    isGameMasterTypingComplete.value = true
+    clearGameMasterTyping()
+    return
+  }
+
+  if (!force && currentGameMasterSceneKey.value === scene.key) {
+    return
+  }
+
+  currentGameMasterSceneKey.value = scene.key
   clearGameMasterTyping()
 
-  const speech = gameMasterScreen.value?.speech ?? ''
+  const speech = scene.speech
 
   gameMasterTypedText.value = ''
   isGameMasterTypingComplete.value = false
 
-  if (!isGameMasterScreenOpen.value || !speech) {
+  if (!speech) {
     isGameMasterTypingComplete.value = true
     return
   }
@@ -1302,7 +1324,7 @@ onMounted(() => {
   scheduleVoteAutomation()
   scheduleEliminationAutomation()
   scheduleLocalNextButton()
-  startGameMasterTyping()
+  startGameMasterTyping(true)
 })
 
 watch(
@@ -1320,7 +1342,7 @@ watch(
     nextVoteVoter.value?.id,
     nextAiVoteVoter.value?.id,
     localNextModalKey.value,
-    gameMasterScreen.value?.speech,
+    gameMasterScreen.value?.key,
   ],
   () => {
     scheduleIntroAdvance()
@@ -1337,9 +1359,7 @@ watch(
 watch(
   () => [
     isGameMasterScreenOpen.value,
-    gameMasterScreen.value?.eyebrow,
-    gameMasterScreen.value?.title,
-    gameMasterScreen.value?.speech,
+    gameMasterScreen.value?.key,
     localNextModalKey.value,
   ],
   () => {
@@ -1448,105 +1468,6 @@ onBeforeUnmount(() => {
       </div>
     </section>
   </div>
-
-  <section
-    v-if="isGameMasterScreenOpen && gameMasterScreen"
-    class="game-master-screen"
-    :class="`game-master-screen-${gameMasterScreen.variant}`"
-    aria-live="polite"
-  >
-    <div class="game-master-stage">
-      <p class="eyebrow">{{ gameMasterScreen.eyebrow }}</p>
-      <h2>{{ gameMasterScreen.title }}</h2>
-
-      <div class="game-master-dialogue">
-        <div class="game-master-avatar" aria-hidden="true">🎭</div>
-        <div class="speech-bubble">
-          <p>{{ gameMasterTypedText }}<span v-if="!isGameMasterTypingComplete" class="typing-caret"></span></p>
-        </div>
-      </div>
-
-      <template v-if="isGameMasterTypingComplete && canLocalInvestigate">
-        <div class="target-grid detective-target-grid">
-          <button
-            v-for="player in detectiveTargets"
-            :key="player.id"
-            type="button"
-            class="target-button"
-            @click="selectDetectiveTarget(player.id)"
-          >
-            {{ player.name }}
-          </button>
-        </div>
-      </template>
-
-      <template v-else-if="isGameMasterTypingComplete && isKillerTargetModalOpen">
-        <p v-if="nextMafiaVoter && !isLocalMafiaTurn" class="warning-text">
-          Waiting for {{ getDisplayPlayerName(nextMafiaVoter.id) }} to choose.
-        </p>
-        <div v-else-if="canHumansActAsMafia && isLocalMafiaTurn" class="target-grid">
-          <button
-            v-for="player in mafiaTargets"
-            :key="player.id"
-            type="button"
-            class="target-button"
-            @click="selectMafiaTarget(player.id)"
-          >
-            {{ player.name }}
-          </button>
-        </div>
-      </template>
-
-      <p
-        v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && detectiveVoteSummary"
-        class="result-text"
-      >
-        {{ detectiveVoteSummary }}.
-      </p>
-
-      <p
-        v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && hasLocalDetectiveVoted && gameState.investigationTargetId === null"
-        class="warning-text"
-      >
-        Investigation submitted. Waiting for your partner.
-      </p>
-
-      <p
-        v-else-if="isGameMasterTypingComplete && canSeeMafiaInfo && mafiaVoteSummary"
-        class="result-text"
-      >
-        {{ mafiaVoteSummary }}.
-      </p>
-
-      <template v-else-if="gameState.phase === 'sleep'">
-        <button
-          v-if="isGameMasterTypingComplete"
-          type="button"
-          :disabled="hasLocalSleepAcknowledged"
-          @click="acknowledgeSleep"
-        >
-          Sleep {{ sleepAcknowledgedCount }}/{{ aliveHumanCount }}
-        </button>
-      </template>
-
-      <button
-        v-else-if="isGameMasterTypingComplete && isLocalNextVisible && localNextModalKey"
-        type="button"
-        class="secondary-button"
-        :disabled="hasLocalNextAcknowledged"
-        @click="dismissLocalModal"
-      >
-        {{ nextButtonLabel }}
-      </button>
-
-      <p
-        v-if="gameState.phase === 'sleep' && hasLocalSleepAcknowledged && sleepAcknowledgedCount < aliveHumanCount"
-        class="warning-text"
-      >
-        Waiting for the other human player.
-      </p>
-    </div>
-  </section>
 
   <div
     v-if="isDiscussionModalOpen"
@@ -1922,7 +1843,106 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <section v-if="isGameStarted" class="players-section game-flow-section" aria-labelledby="game-flow-heading">
+    <section
+      v-if="isGameMasterScreenOpen && gameMasterScreen"
+      class="game-master-screen"
+      :class="`game-master-screen-${gameMasterScreen.variant}`"
+      aria-live="polite"
+    >
+      <div class="game-master-stage">
+        <p class="eyebrow">{{ gameMasterScreen.eyebrow }}</p>
+        <h2>{{ gameMasterScreen.title }}</h2>
+
+        <div class="game-master-dialogue">
+          <div class="game-master-avatar" aria-hidden="true">🎭</div>
+          <div class="speech-bubble">
+            <p>{{ gameMasterTypedText }}<span v-if="!isGameMasterTypingComplete" class="typing-caret"></span></p>
+          </div>
+        </div>
+
+        <template v-if="isGameMasterTypingComplete && canLocalInvestigate">
+          <div class="target-grid detective-target-grid">
+            <button
+              v-for="player in detectiveTargets"
+              :key="player.id"
+              type="button"
+              class="target-button"
+              @click="selectDetectiveTarget(player.id)"
+            >
+              {{ player.name }}
+            </button>
+          </div>
+        </template>
+
+        <template v-else-if="isGameMasterTypingComplete && isKillerTargetModalOpen">
+          <p v-if="nextMafiaVoter && !isLocalMafiaTurn" class="warning-text">
+            Waiting for {{ getDisplayPlayerName(nextMafiaVoter.id) }} to choose.
+          </p>
+          <div v-else-if="canHumansActAsMafia && isLocalMafiaTurn" class="target-grid">
+            <button
+              v-for="player in mafiaTargets"
+              :key="player.id"
+              type="button"
+              class="target-button"
+              @click="selectMafiaTarget(player.id)"
+            >
+              {{ player.name }}
+            </button>
+          </div>
+        </template>
+
+        <p
+          v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && detectiveVoteSummary"
+          class="result-text"
+        >
+          {{ detectiveVoteSummary }}.
+        </p>
+
+        <p
+          v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && hasLocalDetectiveVoted && gameState.investigationTargetId === null"
+          class="warning-text"
+        >
+          Investigation submitted. Waiting for your partner.
+        </p>
+
+        <p
+          v-else-if="isGameMasterTypingComplete && canSeeMafiaInfo && mafiaVoteSummary"
+          class="result-text"
+        >
+          {{ mafiaVoteSummary }}.
+        </p>
+
+        <template v-else-if="gameState.phase === 'sleep'">
+          <button
+            v-if="isGameMasterTypingComplete"
+            type="button"
+            :disabled="hasLocalSleepAcknowledged"
+            @click="acknowledgeSleep"
+          >
+            Sleep {{ sleepAcknowledgedCount }}/{{ aliveHumanCount }}
+          </button>
+        </template>
+
+        <button
+          v-else-if="isGameMasterTypingComplete && isLocalNextVisible && localNextModalKey"
+          type="button"
+          class="secondary-button"
+          :disabled="hasLocalNextAcknowledged"
+          @click="dismissLocalModal"
+        >
+          {{ nextButtonLabel }}
+        </button>
+
+        <p
+          v-if="gameState.phase === 'sleep' && hasLocalSleepAcknowledged && sleepAcknowledgedCount < aliveHumanCount"
+          class="warning-text"
+        >
+          Waiting for the other human player.
+        </p>
+      </div>
+    </section>
+
+    <section v-if="isGameStarted && !isGameMasterScreenOpen" class="players-section game-flow-section" aria-labelledby="game-flow-heading">
       <div class="section-heading">
         <p class="eyebrow">Round {{ gameState.round }}</p>
         <h2 id="game-flow-heading">{{ phaseTitle }}</h2>
