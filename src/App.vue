@@ -606,9 +606,10 @@ const gameMasterScreen = computed(() => {
     return {
       key: `detective-result:${gameState.value.round}:${gameState.value.investigationTargetId}`,
       eyebrow: 'Game Master Result',
-      title: investigationTargetName.value,
-      speech: `The Game Master quietly says this person looks like ${investigationRead.value}.`,
+      title: 'Investigate',
+      speech: `It seems like ${investigationTargetName.value} is ${investigationRead.value}.`,
       variant: 'detective',
+      featuredPlayerId: gameState.value.investigationTargetId,
     }
   }
 
@@ -633,6 +634,21 @@ const gameMasterScreen = computed(() => {
   }
 
   if (isStoryModalOpen.value) {
+    if (
+      gameState.value.phase === 'mafia-sleep' &&
+      canSeeMafiaInfo.value &&
+      gameState.value.pendingEliminationId !== null
+    ) {
+      return {
+        key: `mafia-kill-result:${gameState.value.round}:${gameState.value.pendingEliminationId}`,
+        eyebrow: 'Killer Result',
+        title: 'Eliminate',
+        speech: `${getDisplayPlayerName(gameState.value.pendingEliminationId)} was chosen as the night's target.`,
+        variant: gameState.value.phase,
+        featuredPlayerId: gameState.value.pendingEliminationId,
+      }
+    }
+
     return {
       key: `story:${gameState.value.phase}:${gameState.value.round}`,
       eyebrow: `Round ${gameState.value.round}`,
@@ -656,6 +672,16 @@ const gameMasterScreen = computed(() => {
 })
 
 const isGameMasterScreenOpen = computed(() => Boolean(gameMasterScreen.value))
+
+const featuredGameMasterPlayer = computed(() => {
+  const screen = gameMasterScreen.value
+
+  if (!screen || !('featuredPlayerId' in screen)) {
+    return null
+  }
+
+  return getPlayerById(screen.featuredPlayerId ?? null)
+})
 
 const lobbySlots = computed(() => {
   return Array.from({ length: 8 }, (_, index) => {
@@ -703,6 +729,10 @@ function getDisplayPlayerName(playerId: number | null) {
   }
 
   return name
+}
+
+function getPlayerById(playerId: number | null) {
+  return gameState.value.players.find((player) => player.id === playerId) ?? null
 }
 
 function getKnownRoleLabel(player: Player) {
@@ -1898,6 +1928,11 @@ onBeforeUnmount(() => {
       <div class="game-master-stage">
         <p class="eyebrow">{{ gameMasterScreen.eyebrow }}</p>
         <h2>{{ gameMasterScreen.title }}</h2>
+
+        <article v-if="featuredGameMasterPlayer" class="featured-player">
+          <span class="featured-player-icon">{{ getPlayerIcon(featuredGameMasterPlayer) }}</span>
+          <p>{{ featuredGameMasterPlayer.name }}</p>
+        </article>
 
         <div v-if="gameState.phase !== 'role-reveal'" class="game-master-dialogue">
           <div class="game-master-avatar" aria-hidden="true">🎭</div>
