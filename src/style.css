@@ -402,6 +402,69 @@ h3 {
   z-index: 1;
 }
 
+.landing-menu-shell {
+  width: 100%;
+  min-height: 100vh;
+  padding: 1rem;
+  background: #1f1f1f;
+}
+
+.landing-menu-panel {
+  width: min(505px, calc(100vw - 2rem));
+  min-height: min(585px, calc(100vh - 2rem));
+  place-self: center;
+  align-content: center;
+  justify-items: center;
+  gap: 2.1rem;
+  padding: clamp(2rem, 7vw, 4rem);
+  border: 0;
+  border-radius: 78px;
+  background: #d9d9d9;
+  box-shadow: none;
+}
+
+.landing-menu-panel::before,
+.landing-menu-panel::after {
+  display: none;
+}
+
+.landing-menu-panel h1 {
+  max-width: none;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(5rem, 19vw, 7.75rem);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.08em;
+}
+
+.landing-menu-panel .menu-actions {
+  width: min(377px, 100%);
+  display: grid;
+  gap: 2.15rem;
+  margin-top: 0;
+}
+
+.landing-menu-panel button {
+  width: 100%;
+  min-height: 90px;
+  padding: 0.4rem 1rem 0.75rem;
+  border-radius: 24px;
+  color: #ffffff;
+  background: #919191;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(4rem, 14vw, 4.7rem);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  text-transform: none;
+}
+
+.landing-menu-panel .secondary-button {
+  border: 0;
+  background: #919191;
+}
+
 .menu-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1050,6 +1113,16 @@ h3 {
 }
 
 @media (max-width: 520px) {
+  .landing-menu-panel {
+    min-height: min(540px, calc(100vh - 2rem));
+    border-radius: 54px;
+  }
+
+  .landing-menu-panel button {
+    min-height: 76px;
+    border-radius: 20px;
+  }
+
   .player-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.45rem;
