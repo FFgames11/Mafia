@@ -57,17 +57,20 @@ export function createLobbyState(lobbyCode, hostClientId) {
   }
 }
 
-export function createPlayerTwo(lobbyCode, clientId, existingNames) {
+export function createHumanPlayerRow(lobbyCode, clientId, slotNumber, existingNames, isHost = false) {
   return {
     lobby_code: lobbyCode,
     client_id: clientId,
-    slot_number: 2,
+    slot_number: slotNumber,
     display_name: pickAvailableName(existingNames),
     kind: 'human',
-    is_host: false,
-    is_ready: false,
+    is_host: isHost,
+    is_ready: isHost,
   }
 }
+
+export const createPlayerTwo = (lobbyCode, clientId, existingNames) =>
+  createHumanPlayerRow(lobbyCode, clientId, 2, existingNames)
 
 function createBaseGameState(lobbyCode, humanTeamRole, players) {
   return {

@@ -77,6 +77,8 @@ function mapLobbyState(
   localPlayerId: number,
   fallbackState: GameState,
 ): GameState {
+  const hostPlayerId = players.find((player) => player.kind === 'human' && player.is_host)?.slot_number ?? 1
+
   if (lobby.game_state) {
     const gamePlayersById = new Map(lobby.game_state.players.map((player) => [player.id, player]))
     const syncedPlayers = players
@@ -95,6 +97,7 @@ function mapLobbyState(
       ...lobby.game_state,
       players: syncedPlayers,
       seatOrder: lobby.game_state.seatOrder ?? syncedPlayers.map((player) => player.id),
+      hostPlayerId,
       localPlayerId,
     }
   }
@@ -106,7 +109,7 @@ function mapLobbyState(
     mode: 'lobby',
     lobbyCode: lobby.code,
     localPlayerId,
-    hostPlayerId: 1,
+    hostPlayerId,
     phase: lobby.status === 'started' ? 'role-reveal' : 'setup',
     seatOrder: players.map((player) => player.slot_number),
     players: players
@@ -137,6 +140,34 @@ export async function joinOnlineLobby(lobbyCode: string) {
   })
 
   return lobby
+}
+
+export async function leaveOnlineLobby(lobbyCode: string) {
+  const clientId = getClientId()
+  await apiRequest(`/api/lobbies/${lobbyCode}/leave`, {
+    method: 'POST',
+    body: JSON.stringify({ clientId }),
+  })
+}
+
+export function leaveOnlineLobbyOnUnload(lobbyCode: string) {
+  if (!isSupabaseConfigured || !supabaseUrl || !supabaseAnonKey) {
+    return
+  }
+
+  const clientId = getClientId()
+  const body = JSON.stringify({ clientId })
+
+  void fetch(`${apiBaseUrl}/api/lobbies/${lobbyCode}/leave`, {
+    method: 'POST',
+    body,
+    keepalive: true,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Supabase-Url': supabaseUrl,
+      'X-Supabase-Anon-Key': supabaseAnonKey,
+    },
+  }).catch(() => undefined)
 }
 
 export async function setOnlinePlayerReady(lobbyCode: string, isReady: boolean) {

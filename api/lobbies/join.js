@@ -1,4 +1,4 @@
-import { createLobbyState, createPlayerTwo } from '../_lib/game.js'
+import { createHumanPlayerRow, createLobbyState } from '../_lib/game.js'
 import { getBody, handleOptions, methodNotAllowed, sendError, sendJson } from '../_lib/http.js'
 import { getSupabase } from '../_lib/supabase.js'
 
@@ -44,23 +44,44 @@ export default async function handler(req, res) {
 
     const { data: players, error: playersError } = await supabase
       .from('lobby_players')
-      .select('display_name,slot_number')
+      .select('client_id,display_name,slot_number,kind,is_host')
       .eq('lobby_code', lobbyCode)
 
     if (playersError) {
       throw playersError
     }
 
-    if (players?.some((player) => player.slot_number === 2)) {
+    const existingPlayer = players?.find((player) => player.client_id === clientId && player.kind === 'human')
+
+    if (existingPlayer) {
+      const currentGameState = lobby.game_state ?? createLobbyState(lobbyCode, lobby.host_client_id).gameState
+
+      return sendJson(req, res, 200, {
+        lobby: {
+          ...currentGameState,
+          localPlayerId: existingPlayer.slot_number,
+        },
+      })
+    }
+
+    const occupiedHumanSlots = new Set(
+      (players ?? [])
+        .filter((player) => player.kind === 'human')
+        .map((player) => player.slot_number),
+    )
+    const availableSlot = [1, 2].find((slotNumber) => !occupiedHumanSlots.has(slotNumber))
+
+    if (!availableSlot) {
       return sendJson(req, res, 409, { error: 'Lobby is already full.' })
     }
 
-    const playerTwoRow = createPlayerTwo(
+    const playerRow = createHumanPlayerRow(
       lobbyCode,
       clientId,
+      availableSlot,
       players?.map((player) => player.display_name) ?? [],
     )
-    const { error: insertError } = await supabase.from('lobby_players').insert(playerTwoRow)
+    const { error: insertError } = await supabase.from('lobby_players').insert(playerRow)
 
     if (insertError) {
       throw insertError
@@ -68,20 +89,21 @@ export default async function handler(req, res) {
 
     const fallback = createLobbyState(lobbyCode, lobby.host_client_id).gameState
     const currentGameState = lobby.game_state ?? fallback
-    const playerTwo = {
-      id: 2,
-      seat: 'Seat 2',
-      name: playerTwoRow.display_name,
+    const joinedPlayer = {
+      id: playerRow.slot_number,
+      seat: `Seat ${playerRow.slot_number}`,
+      name: playerRow.display_name,
       role: currentGameState.humanTeamRole,
       status: 'alive',
       kind: 'human',
       isHost: false,
       isReady: false,
     }
+    const existingGamePlayers = currentGameState.players.filter((player) => player.id !== joinedPlayer.id)
     const updatedGameState = {
       ...currentGameState,
-      players: [...currentGameState.players, playerTwo].sort((first, second) => first.id - second.id),
-      seatOrder: [...new Set([...currentGameState.seatOrder, playerTwo.id])],
+      players: [...existingGamePlayers, joinedPlayer].sort((first, second) => first.id - second.id),
+      seatOrder: [...new Set([...currentGameState.seatOrder, joinedPlayer.id])].sort((first, second) => first - second),
     }
 
     const { error: updateError } = await supabase
@@ -96,7 +118,7 @@ export default async function handler(req, res) {
     return sendJson(req, res, 200, {
       lobby: {
         ...updatedGameState,
-        localPlayerId: 2,
+        localPlayerId: joinedPlayer.id,
       },
     })
   } catch (error) {

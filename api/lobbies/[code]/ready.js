@@ -19,12 +19,27 @@ export default async function handler(req, res) {
       return sendJson(req, res, 400, { error: 'Missing ready payload.' })
     }
 
+    const { data: playerRow, error: playerError } = await supabase
+      .from('lobby_players')
+      .select('slot_number')
+      .eq('lobby_code', lobbyCode)
+      .eq('client_id', clientId)
+      .eq('is_host', false)
+      .maybeSingle()
+
+    if (playerError) {
+      throw playerError
+    }
+
+    if (!playerRow) {
+      return sendJson(req, res, 404, { error: 'Player not found.' })
+    }
+
     const { error } = await supabase
       .from('lobby_players')
       .update({ is_ready: isReady })
       .eq('lobby_code', lobbyCode)
       .eq('client_id', clientId)
-      .eq('is_host', false)
 
     if (error) {
       throw error
@@ -45,7 +60,7 @@ export default async function handler(req, res) {
       const updatedGameState = {
         ...gameState,
         players: gameState.players.map((player) =>
-          player.id === 2 ? { ...player, isReady } : player,
+          player.id === playerRow.slot_number ? { ...player, isReady } : player,
         ),
       }
       const { error: updateError } = await supabase

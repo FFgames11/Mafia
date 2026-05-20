@@ -35,6 +35,8 @@ import type { GameState, Player, PlayerRole } from './game/types'
 import {
   createOnlineLobby,
   joinOnlineLobby,
+  leaveOnlineLobby,
+  leaveOnlineLobbyOnUnload,
   refreshOnlineLobby,
   setOnlinePlayerReady,
   startOnlineLobby,
@@ -1312,6 +1314,24 @@ function openGame() {
   screen.value = 'mode-select'
 }
 
+async function leaveLobbyAndOpenGame() {
+  if (!isLobbyWaiting.value || !gameState.value.lobbyCode) {
+    openGame()
+    return
+  }
+
+  const lobbyCode = gameState.value.lobbyCode
+  unsubscribeCurrentLobby()
+  screen.value = 'mode-select'
+  gameState.value = createVsAiGameState()
+
+  try {
+    await leaveOnlineLobby(lobbyCode)
+  } catch (error) {
+    console.error('Lobby leave failed:', error)
+  }
+}
+
 function openOptions() {
   screen.value = 'options'
 }
@@ -1553,6 +1573,12 @@ function startGameMasterTyping(force = false) {
   }, 24)
 }
 
+function leaveLobbyOnUnload() {
+  if (isLobbyWaiting.value && gameState.value.lobbyCode) {
+    leaveOnlineLobbyOnUnload(gameState.value.lobbyCode)
+  }
+}
+
 onMounted(() => {
   scheduleRoleRevealDismissal()
   scheduleIntroAdvance()
@@ -1562,6 +1588,7 @@ onMounted(() => {
   scheduleEliminationAutomation()
   scheduleLocalNextButton()
   startGameMasterTyping(true)
+  window.addEventListener('beforeunload', leaveLobbyOnUnload)
 })
 
 watch(
@@ -1647,6 +1674,7 @@ onBeforeUnmount(() => {
 
   clearGameMasterTyping()
 
+  window.removeEventListener('beforeunload', leaveLobbyOnUnload)
   unsubscribeCurrentLobby()
 })
 </script>
@@ -2079,7 +2107,7 @@ onBeforeUnmount(() => {
         type="button"
         class="back-arrow-button"
         aria-label="Back to play menu"
-        @click="openGame"
+        @click="leaveLobbyAndOpenGame"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24">
           <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20v-2Z" />
@@ -2321,7 +2349,7 @@ onBeforeUnmount(() => {
     </section>
 
     <section v-if="!isGameStarted" class="players-section" aria-labelledby="players-heading">
-      <div v-if="gameState.mode === 'lobby'" class="sticky-code-note">
+      <div v-if="gameState.mode === 'lobby' && isHost" class="sticky-code-note">
         <span>Lobby Code</span>
         <strong>{{ gameState.lobbyCode }}</strong>
       </div>
