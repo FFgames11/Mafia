@@ -63,6 +63,7 @@ const voteAutomationTimeoutId = ref<number | null>(null)
 const eliminationAutomationTimeoutId = ref<number | null>(null)
 const hasSeenRoleReveal = ref(false)
 const isVoteModalMinimized = ref(true)
+const isDiscussionNotesOpen = ref(false)
 const discussionLogElement = ref<HTMLElement | null>(null)
 const isLocalNextVisible = ref(false)
 const dismissedLocalModalKeys = ref<Set<string>>(new Set())
@@ -405,16 +406,35 @@ const discussionChoiceOptions = computed(() => {
 
 const discussionEntries = computed(() => {
   return gameState.value.discussionLog.map((entry) => ({
+    speakerId: entry.speakerId,
     speaker: getDisplayPlayerName(entry.speakerId),
+    player: getPlayerById(entry.speakerId),
     text: entry.text,
   }))
 })
 
-const voteEntries = computed(() => {
-  return gameState.value.voteChoices.map((vote) => ({
-    voter: getDisplayPlayerName(vote.voterId),
-    target: getDisplayPlayerName(vote.targetId),
-  }))
+const activeDiscussionEntry = computed(() => {
+  return discussionEntries.value.at(-1) ?? null
+})
+
+const activeDiscussionPlayer = computed(() => {
+  return activeDiscussionEntry.value?.player ?? currentDiscussionSpeaker.value ?? null
+})
+
+const activeDiscussionText = computed(() => {
+  if (currentDiscussionSpeaker.value?.id === localPlayer.value?.id && discussionChoiceOptions.value.length) {
+    return 'Choose what you want to say.'
+  }
+
+  if (activeDiscussionEntry.value) {
+    return activeDiscussionEntry.value.text
+  }
+
+  if (currentDiscussionSpeaker.value) {
+    return `${getDisplayPlayerName(currentDiscussionSpeaker.value.id)} is thinking.`
+  }
+
+  return 'The town has finished speaking.'
 })
 
 const voteResultEntries = computed(() => {
@@ -1545,99 +1565,120 @@ onBeforeUnmount(() => {
     </section>
   </div>
 
-  <div
+  <section
     v-if="isDiscussionModalOpen"
-    class="modal-backdrop discussion-modal-backdrop"
-    role="presentation"
+    class="discussion-stage-screen"
+    aria-labelledby="discussion-stage-title"
   >
-    <section class="help-modal discussion-modal" role="dialog" aria-modal="true">
+    <button
+      type="button"
+      class="discussion-notes-button"
+      :aria-label="isDiscussionNotesOpen ? 'Hide discussion notes' : 'Show discussion notes'"
+      @click="isDiscussionNotesOpen = !isDiscussionNotesOpen"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="discussion-roster" aria-label="Discussion order">
+      <article
+        v-for="player in discussionOrder"
+        :key="player.id"
+        class="discussion-roster-player"
+        :class="{ 'is-speaking': activeDiscussionPlayer?.id === player.id }"
+      >
+        <span>{{ getPlayerIcon(player) }}</span>
+        <p>{{ player.name }}</p>
+      </article>
+    </div>
+
+    <div class="discussion-stage-content">
+      <p class="eyebrow">Discussion {{ discussionEntries.length }}/{{ discussionOrder.length }}</p>
+      <h2 id="discussion-stage-title">Everyone speaks</h2>
+
+      <article class="discussion-speech-card">
+        <span v-if="activeDiscussionPlayer" class="discussion-speaker-icon">
+          {{ getPlayerIcon(activeDiscussionPlayer) }}
+        </span>
+        <p>{{ activeDiscussionText }}</p>
+
+        <div
+          v-if="currentDiscussionSpeaker?.id === localPlayer?.id && discussionChoiceOptions.length"
+          class="discussion-choice-list"
+        >
+          <button
+            v-for="option in discussionChoiceOptions"
+            :key="option"
+            type="button"
+            @click="chooseDiscussionLine(option)"
+          >
+            {{ option }}
+          </button>
+        </div>
+      </article>
+
+      <p
+        v-if="gameState.phase === 'discussion' && currentDiscussionSpeaker?.kind === 'human' && currentDiscussionSpeaker.id !== localPlayer?.id"
+        class="discussion-status"
+      >
+        Waiting for {{ getDisplayPlayerName(currentDiscussionSpeaker.id) }} to speak.
+      </p>
+
+      <div class="discussion-actions">
+        <button
+          v-if="canOpenVotingFromDiscussion"
+          type="button"
+          @click="proceedToVoting"
+        >
+          Vote
+        </button>
+        <p
+          v-else-if="isDiscussionComplete && localPlayer?.status !== 'alive'"
+          class="discussion-status"
+        >
+          You were eliminated. You can only spectate voting.
+        </p>
+        <button
+          v-else-if="canShowDiscussionVoteButton"
+          type="button"
+          @click="openVoteModal"
+        >
+          Vote
+        </button>
+        <p v-else-if="gameState.phase === 'voting' && hasLocalVoted" class="discussion-status">
+          Your vote is locked in.
+        </p>
+        <p v-else-if="gameState.phase === 'voting'" class="discussion-status">
+          You were eliminated. You can only spectate voting.
+        </p>
+      </div>
+    </div>
+
+    <aside v-if="isDiscussionNotesOpen" class="discussion-notes-panel" aria-label="Conversation notes">
       <div class="modal-header">
         <div>
-          <p class="eyebrow">Discussion</p>
-          <h2>Everyone speaks</h2>
+          <p class="eyebrow">Notes</p>
+          <h2>Conversation order</h2>
         </div>
-        <strong class="discussion-count">{{ discussionEntries.length }}/{{ discussionOrder.length }}</strong>
+        <button type="button" class="icon-button" aria-label="Close notes" @click="isDiscussionNotesOpen = false">
+          X
+        </button>
       </div>
 
-      <p class="story-text">{{ narrationText }}</p>
-
-      <div v-if="discussionEntries.length" ref="discussionLogElement" class="discussion-log">
+      <div v-if="discussionEntries.length" ref="discussionLogElement" class="discussion-log discussion-notes-log">
         <article
           v-for="(entry, index) in discussionEntries"
           :key="`${index}-${entry.speaker}`"
           class="discussion-line"
         >
-          <span>{{ entry.speaker }}</span>
+          <span>{{ index + 1 }}. {{ entry.speaker }}</span>
           <p>{{ entry.text }}</p>
         </article>
       </div>
-
-      <p v-if="currentDiscussionSpeaker" class="warning-text">
-        Next speaker: {{ getDisplayPlayerName(currentDiscussionSpeaker.id) }}
-      </p>
-
-      <div
-        v-if="currentDiscussionSpeaker?.id === localPlayer?.id && discussionChoiceOptions.length"
-        class="target-grid"
-      >
-        <button
-          v-for="option in discussionChoiceOptions"
-          :key="option"
-          type="button"
-          class="target-button"
-          @click="chooseDiscussionLine(option)"
-        >
-          {{ option }}
-        </button>
-      </div>
-
-      <p
-        v-else-if="gameState.phase === 'discussion' && currentDiscussionSpeaker?.kind === 'human'"
-        class="warning-text"
-      >
-        Waiting for {{ getDisplayPlayerName(currentDiscussionSpeaker.id) }} to speak.
-      </p>
-
-      <div v-if="voteEntries.length" class="vote-log">
-        <p class="eyebrow">Vote Log</p>
-        <article
-          v-for="(entry, index) in voteEntries"
-          :key="`${index}-${entry.voter}-${entry.target}`"
-          class="vote-line"
-        >
-          <span>{{ entry.voter }}</span>
-          <strong>{{ entry.target }}</strong>
-        </article>
-      </div>
-
-      <button
-        v-if="canOpenVotingFromDiscussion"
-        type="button"
-        @click="proceedToVoting"
-      >
-        Vote
-      </button>
-      <p
-        v-else-if="isDiscussionComplete && localPlayer?.status !== 'alive'"
-        class="warning-text"
-      >
-        You were eliminated. You can only spectate voting.
-      </p>
-      <button
-        v-else-if="canShowDiscussionVoteButton"
-        type="button"
-        @click="openVoteModal"
-      >
-        Vote
-      </button>
-      <p v-else-if="gameState.phase === 'voting' && hasLocalVoted" class="warning-text">
-        Your vote is locked in.
-      </p>
-      <p v-else-if="gameState.phase === 'voting'" class="warning-text">
-        You were eliminated. You can only spectate voting.
-      </p>
-    </section>
-  </div>
+      <p v-else class="discussion-status">No one has spoken yet.</p>
+    </aside>
+  </section>
 
   <div
     v-if="isVoteModalOpen"
