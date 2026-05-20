@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const supabase = getSupabase()
+    const supabase = getSupabase(req)
     const { clientId } = getBody(req)
 
     if (!clientId) {

@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const supabase = getSupabase()
+    const supabase = getSupabase(req)
     const lobbyCode = String(req.query.code ?? '').toUpperCase()
     const { clientId, isReady } = getBody(req)
 

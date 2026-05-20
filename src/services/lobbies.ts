@@ -1,6 +1,6 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { GameState, Player, PlayerKind } from '../game/types'
-import { supabase } from './supabase'
+import { isSupabaseConfigured, supabase, supabaseAnonKey, supabaseUrl } from './supabase'
 
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 const apiBaseUrl = configuredApiBaseUrl ?? (import.meta.env.PROD ? '' : 'http://127.0.0.1:3000')
@@ -205,10 +205,18 @@ export async function refreshOnlineLobby(gameState: GameState) {
 }
 
 async function apiRequest<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+  if (!isSupabaseConfigured || !supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Supabase is not configured on this deployment. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel, then redeploy.',
+    )
+  }
+
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      'X-Supabase-Url': supabaseUrl,
+      'X-Supabase-Anon-Key': supabaseAnonKey,
       ...init?.headers,
     },
   })

@@ -18,15 +18,15 @@ export default async function handler(req, res) {
       return sendJson(req, res, 400, { error: 'Missing gameState.' })
     }
 
-    const mergedGameState = await updateLobbyState(lobbyCode, gameState)
+    const mergedGameState = await updateLobbyState(req, lobbyCode, gameState)
     return sendJson(req, res, 200, { ok: true, gameState: mergedGameState })
   } catch (error) {
     return sendError(req, res, error)
   }
 }
 
-async function updateLobbyState(lobbyCode, gameState) {
-  const supabase = getSupabase()
+async function updateLobbyState(req, lobbyCode, gameState) {
+  const supabase = getSupabase(req)
   const { data: existingLobby, error: fetchError } = await supabase
     .from('lobbies')
     .select('game_state')
