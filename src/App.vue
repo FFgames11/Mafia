@@ -293,13 +293,6 @@ const detectiveTargets = computed(() => {
   return getDetectiveTargets(gameState.value, localPlayer.value.id)
 })
 
-const detectiveVoteSummaryLines = computed(() => {
-  return gameState.value.detectiveVotes
-    .map((vote) => {
-      return `${getPlayerChoiceLabel(vote.detectiveId)} chose ${getPlayerChoiceLabel(vote.targetId)}`
-    })
-})
-
 const investigationRead = computed(() => {
   if (gameState.value.investigationResult === null) {
     return ''
@@ -2004,23 +1997,6 @@ onBeforeUnmount(() => {
               {{ player.name }}
             </button>
           </div>
-        </template>
-
-        <template v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && detectiveVoteSummaryLines.length">
-          <div class="result-lines">
-            <p v-for="line in detectiveVoteSummaryLines" :key="line" class="result-text">
-              {{ line }}.
-            </p>
-          </div>
-          <button
-            v-if="isLocalNextVisible && localNextModalKey"
-            type="button"
-            class="secondary-button"
-            :disabled="hasLocalNextAcknowledged"
-            @click="dismissLocalModal"
-          >
-            {{ nextButtonLabel }}
-          </button>
         </template>
 
         <p
