@@ -66,6 +66,7 @@ const isVoteModalMinimized = ref(true)
 const isDiscussionNotesOpen = ref(false)
 const discussionLogElement = ref<HTMLElement | null>(null)
 const localNextAcknowledgements = ref<Record<string, number[]>>({})
+const proceededDetectiveResultKeys = ref<Set<string>>(new Set())
 const isLocalNextVisible = ref(false)
 const dismissedLocalModalKeys = ref<Set<string>>(new Set())
 const isNextGateAdvanceBusy = ref(false)
@@ -337,6 +338,39 @@ const hasLocalDetectiveVoted = computed(() => {
   )
 })
 
+const localDetectiveVote = computed(() => {
+  if (!localPlayer.value) {
+    return null
+  }
+
+  return gameState.value.detectiveVotes.find((vote) => vote.detectiveId === localPlayer.value?.id) ?? null
+})
+
+const localDetectiveSelectedPlayer = computed(() => {
+  return getPlayerById(localDetectiveVote.value?.targetId ?? null)
+})
+
+const detectiveResultKey = computed(() => {
+  return `detective-result:${gameState.value.round}:${gameState.value.investigationTargetId}`
+})
+
+const hasLocalProceededToDetectiveResult = computed(() => {
+  return proceededDetectiveResultKeys.value.has(detectiveResultKey.value)
+})
+
+const isDetectiveWaitingScreenOpen = computed(() => {
+  return Boolean(
+    canSeeDetectiveInfo.value &&
+      gameState.value.phase === 'detective' &&
+      hasLocalDetectiveVoted.value &&
+      !hasLocalProceededToDetectiveResult.value,
+  )
+})
+
+const isDetectiveInvestigationResolved = computed(() => {
+  return gameState.value.phase === 'detective' && gameState.value.investigationTargetId !== null
+})
+
 const canLocalInvestigate = computed(() => {
   return Boolean(
     localPlayer.value &&
@@ -520,12 +554,13 @@ const isKillerTargetModalOpen = computed(() => {
 })
 
 const isDetectiveResultModalOpen = computed(() => {
-  const key = `detective-result:${gameState.value.round}:${gameState.value.investigationTargetId}`
+  const key = detectiveResultKey.value
 
   return (
     gameState.value.phase === 'detective' &&
     gameState.value.investigationTargetId !== null &&
     canSeeDetectiveInfo.value &&
+    hasLocalProceededToDetectiveResult.value &&
     !isLocalModalDismissed(key)
   )
 })
@@ -1115,6 +1150,13 @@ async function selectDetectiveTarget(targetId: number) {
 
   gameState.value = chooseDetectiveTarget(gameState.value, localPlayer.value.id, targetId)
   await persistCurrentGameState()
+}
+
+function proceedToDetectiveResult() {
+  proceededDetectiveResultKeys.value = new Set([
+    ...proceededDetectiveResultKeys.value,
+    detectiveResultKey.value,
+  ])
 }
 
 async function letDetectivesAct() {
@@ -2068,6 +2110,32 @@ onBeforeUnmount(() => {
           </div>
         </template>
 
+        <template v-else-if="isGameMasterTypingComplete && isDetectiveWaitingScreenOpen">
+          <article class="selected-target-card">
+            <p class="eyebrow">Your selection</p>
+            <span v-if="localDetectiveSelectedPlayer" class="selected-target-icon">
+              {{ getPlayerIcon(localDetectiveSelectedPlayer) }}
+            </span>
+            <h3>
+              You selected {{ localDetectiveSelectedPlayer?.name ?? 'a player' }}.
+            </h3>
+            <p v-if="!isDetectiveInvestigationResolved">
+              Waiting for your partner to choose a player to investigate.
+            </p>
+            <p v-else>
+              Your partner has finished choosing. Proceed to hear the Game Master's result.
+            </p>
+          </article>
+          <button
+            v-if="isDetectiveInvestigationResolved"
+            type="button"
+            class="secondary-button"
+            @click="proceedToDetectiveResult"
+          >
+            Proceed
+          </button>
+        </template>
+
         <template v-else-if="isGameMasterTypingComplete && isKillerTargetModalOpen">
           <p v-if="nextMafiaVoter && !isLocalMafiaTurn" class="warning-text">
             Waiting for {{ getDisplayPlayerName(nextMafiaVoter.id) }} to choose.
@@ -2084,13 +2152,6 @@ onBeforeUnmount(() => {
             </button>
           </div>
         </template>
-
-        <p
-          v-else-if="isGameMasterTypingComplete && canSeeDetectiveInfo && hasLocalDetectiveVoted && gameState.investigationTargetId === null"
-          class="warning-text"
-        >
-          Investigation submitted. Waiting for your partner.
-        </p>
 
         <div
           v-else-if="isGameMasterTypingComplete && canSeeMafiaInfo && mafiaVoteSummaryLines.length"
