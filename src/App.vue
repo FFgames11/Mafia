@@ -31,7 +31,7 @@ import {
   roleLabels,
   startGame,
 } from './game/setup'
-import type { Player, PlayerRole } from './game/types'
+import type { GameState, Player, PlayerRole } from './game/types'
 import {
   createOnlineLobby,
   joinOnlineLobby,
@@ -65,6 +65,7 @@ const hasSeenRoleReveal = ref(false)
 const isVoteModalMinimized = ref(true)
 const isDiscussionNotesOpen = ref(false)
 const discussionLogElement = ref<HTMLElement | null>(null)
+const localNextAcknowledgements = ref<Record<string, number[]>>({})
 const isLocalNextVisible = ref(false)
 const dismissedLocalModalKeys = ref<Set<string>>(new Set())
 const isNextGateAdvanceBusy = ref(false)
@@ -789,12 +790,50 @@ function getCurrentNextAcknowledgedIds() {
   }
 
   const acknowledgements = gameState.value.nextAcknowledgements ?? {}
+  const modalKey = localNextModalKey.value
+  const scopedModalKey = getScopedNextModalKey(modalKey)
 
-  if (gameState.value.phase === 'role-reveal') {
-    return acknowledgements[`role-reveal:${gameState.value.round}`] ?? []
+  return mergeNumberIds(acknowledgements[modalKey], localNextAcknowledgements.value[scopedModalKey])
+}
+
+function markLocalNextAcknowledged(modalKey: string, playerId: number) {
+  const scopedModalKey = getScopedNextModalKey(modalKey)
+
+  localNextAcknowledgements.value = {
+    ...localNextAcknowledgements.value,
+    [scopedModalKey]: mergeNumberIds(localNextAcknowledgements.value[scopedModalKey], [playerId]),
+  }
+}
+
+function mergeLocalNextAcknowledgements(state: GameState): GameState {
+  const nextAcknowledgements = { ...(state.nextAcknowledgements ?? {}) }
+  const currentScope = `${state.lobbyCode || state.mode}:`
+
+  for (const [scopedModalKey, localIds] of Object.entries(localNextAcknowledgements.value)) {
+    if (!scopedModalKey.startsWith(currentScope)) {
+      continue
+    }
+
+    const modalKey = unscopedNextModalKey(scopedModalKey)
+    nextAcknowledgements[modalKey] = mergeNumberIds(nextAcknowledgements[modalKey], localIds)
   }
 
-  return acknowledgements[localNextModalKey.value] ?? []
+  return {
+    ...state,
+    nextAcknowledgements,
+  }
+}
+
+function getScopedNextModalKey(modalKey: string) {
+  return `${gameState.value.lobbyCode || gameState.value.mode}:${modalKey}`
+}
+
+function unscopedNextModalKey(scopedModalKey: string) {
+  return scopedModalKey.slice(scopedModalKey.indexOf(':') + 1)
+}
+
+function mergeNumberIds(firstIds: number[] | undefined, secondIds: number[] | undefined) {
+  return Array.from(new Set([...(firstIds ?? []), ...(secondIds ?? [])]))
 }
 
 function dismissLocalModal() {
@@ -816,11 +855,11 @@ async function acknowledgeNext() {
     return
   }
 
+  markLocalNextAcknowledged(modalKey, localPlayer.value.id)
+
   const nextAcknowledgements = {
     ...(gameState.value.nextAcknowledgements ?? {}),
-    [modalKey]: Array.from(
-      new Set([...(gameState.value.nextAcknowledgements?.[modalKey] ?? []), localPlayer.value.id]),
-    ),
+    [modalKey]: getCurrentNextAcknowledgedIds(),
   }
   let nextState = {
     ...gameState.value,
@@ -925,7 +964,7 @@ async function advanceWhenNextGateIsComplete() {
     return
   }
 
-  const acknowledgedIds = gameState.value.nextAcknowledgements?.[modalKey] ?? []
+  const acknowledgedIds = getCurrentNextAcknowledgedIds()
   const acknowledgedCount = requiredHumans.filter((player) => acknowledgedIds.includes(player.id)).length
 
   if (acknowledgedCount < requiredHumans.length) {
@@ -1222,7 +1261,13 @@ async function persistCurrentGameState() {
     return
   }
 
-  await updateOnlineGameState(gameState.value.lobbyCode, gameState.value)
+  const localPlayerId = gameState.value.localPlayerId
+  const updatedState = await updateOnlineGameState(gameState.value.lobbyCode, gameState.value)
+
+  gameState.value = {
+    ...mergeLocalNextAcknowledgements(updatedState),
+    localPlayerId,
+  }
 }
 
 function unsubscribeCurrentLobby() {
@@ -1268,7 +1313,7 @@ async function refreshCurrentLobby() {
   isRefreshingLobby.value = true
 
   try {
-    gameState.value = await refreshOnlineLobby(gameState.value)
+    gameState.value = mergeLocalNextAcknowledgements(await refreshOnlineLobby(gameState.value))
     scheduleRoleRevealDismissal()
   } catch (error) {
     console.error('Lobby refresh failed:', error)

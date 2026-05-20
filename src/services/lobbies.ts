@@ -156,10 +156,12 @@ export async function startOnlineLobby(lobbyCode: string, gameState: GameState) 
 }
 
 export async function updateOnlineGameState(lobbyCode: string, gameState: GameState) {
-  await apiRequest(`/api/lobbies/${lobbyCode}/state`, {
+  const { gameState: updatedGameState } = await apiRequest<{ gameState?: GameState }>(`/api/lobbies/${lobbyCode}/state`, {
     method: 'PATCH',
     body: JSON.stringify({ gameState }),
   })
+
+  return updatedGameState ?? gameState
 }
 
 export function subscribeToLobby(
