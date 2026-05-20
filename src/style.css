@@ -965,36 +965,6 @@ h3 {
   line-height: 1;
 }
 
-.selected-target-card {
-  width: min(560px, 100%);
-  display: grid;
-  justify-items: center;
-  gap: 0.65rem;
-  padding: 1.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 16px;
-  background: rgba(190, 190, 190, 0.34);
-  text-align: center;
-}
-
-.selected-target-card h3 {
-  color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 1.3rem;
-  font-weight: 400;
-}
-
-.selected-target-card p:not(.eyebrow) {
-  color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 0.98rem;
-}
-
-.selected-target-icon {
-  font-size: 3.4rem;
-  line-height: 1;
-}
-
 .result-text {
   width: fit-content;
   padding: 0.75rem 1rem;

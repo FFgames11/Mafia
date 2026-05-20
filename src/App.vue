@@ -66,7 +66,6 @@ const isVoteModalMinimized = ref(true)
 const isDiscussionNotesOpen = ref(false)
 const discussionLogElement = ref<HTMLElement | null>(null)
 const localNextAcknowledgements = ref<Record<string, number[]>>({})
-const proceededDetectiveResultKeys = ref<Set<string>>(new Set())
 const isLocalNextVisible = ref(false)
 const dismissedLocalModalKeys = ref<Set<string>>(new Set())
 const isNextGateAdvanceBusy = ref(false)
@@ -354,8 +353,36 @@ const detectiveResultKey = computed(() => {
   return `detective-result:${gameState.value.round}:${gameState.value.investigationTargetId}`
 })
 
+const detectiveProceedKey = computed(() => {
+  return `detective-proceed:${gameState.value.round}:${gameState.value.investigationTargetId}`
+})
+
+const detectiveProceedAcknowledgedIds = computed(() => {
+  if (!isDetectiveInvestigationResolved.value) {
+    return []
+  }
+
+  return getAcknowledgedIdsForKey(detectiveProceedKey.value)
+})
+
+const detectiveProceedAcknowledgedCount = computed(() => {
+  return gameState.value.players.filter((player) => {
+    return player.kind === 'human' && detectiveProceedAcknowledgedIds.value.includes(player.id)
+  }).length
+})
+
 const hasLocalProceededToDetectiveResult = computed(() => {
-  return proceededDetectiveResultKeys.value.has(detectiveResultKey.value)
+  return Boolean(
+    localPlayer.value && detectiveProceedAcknowledgedIds.value.includes(localPlayer.value.id),
+  )
+})
+
+const isDetectiveProceedComplete = computed(() => {
+  return (
+    isDetectiveInvestigationResolved.value &&
+    nextRequiredCount.value > 0 &&
+    detectiveProceedAcknowledgedCount.value >= nextRequiredCount.value
+  )
 })
 
 const isDetectiveWaitingScreenOpen = computed(() => {
@@ -363,7 +390,7 @@ const isDetectiveWaitingScreenOpen = computed(() => {
     canSeeDetectiveInfo.value &&
       gameState.value.phase === 'detective' &&
       hasLocalDetectiveVoted.value &&
-      !hasLocalProceededToDetectiveResult.value,
+      !isDetectiveProceedComplete.value,
   )
 })
 
@@ -560,7 +587,7 @@ const isDetectiveResultModalOpen = computed(() => {
     gameState.value.phase === 'detective' &&
     gameState.value.investigationTargetId !== null &&
     canSeeDetectiveInfo.value &&
-    hasLocalProceededToDetectiveResult.value &&
+    isDetectiveProceedComplete.value &&
     !isLocalModalDismissed(key)
   )
 })
@@ -646,6 +673,19 @@ const gameMasterScreen = computed(() => {
       title: roleRevealMessage.value,
       speech: '',
       variant: 'role',
+    }
+  }
+
+  if (isDetectiveWaitingScreenOpen.value) {
+    return {
+      key: `detective-selected:${gameState.value.round}:${localDetectiveVote.value?.targetId ?? 'unknown'}:${gameState.value.investigationTargetId ?? 'waiting'}`,
+      eyebrow: 'Your Selection',
+      title: `You selected ${localDetectiveSelectedPlayer.value?.name ?? 'a player'}`,
+      speech: isDetectiveInvestigationResolved.value
+        ? 'Your partner has finished choosing. Press Proceed when you are ready to hear the Game Master result.'
+        : 'Waiting for your partner to choose a player to investigate.',
+      variant: 'detective',
+      featuredPlayerId: localDetectiveVote.value?.targetId ?? null,
     }
   }
 
@@ -824,8 +864,11 @@ function getCurrentNextAcknowledgedIds() {
     return []
   }
 
+  return getAcknowledgedIdsForKey(localNextModalKey.value)
+}
+
+function getAcknowledgedIdsForKey(modalKey: string) {
   const acknowledgements = gameState.value.nextAcknowledgements ?? {}
-  const modalKey = localNextModalKey.value
   const scopedModalKey = getScopedNextModalKey(modalKey)
 
   return mergeNumberIds(acknowledgements[modalKey], localNextAcknowledgements.value[scopedModalKey])
@@ -1152,11 +1195,23 @@ async function selectDetectiveTarget(targetId: number) {
   await persistCurrentGameState()
 }
 
-function proceedToDetectiveResult() {
-  proceededDetectiveResultKeys.value = new Set([
-    ...proceededDetectiveResultKeys.value,
-    detectiveResultKey.value,
-  ])
+async function proceedToDetectiveResult() {
+  if (!localPlayer.value || !isDetectiveInvestigationResolved.value || hasLocalProceededToDetectiveResult.value) {
+    return
+  }
+
+  const modalKey = detectiveProceedKey.value
+  markLocalNextAcknowledged(modalKey, localPlayer.value.id)
+
+  gameState.value = {
+    ...gameState.value,
+    nextAcknowledgements: {
+      ...(gameState.value.nextAcknowledgements ?? {}),
+      [modalKey]: getAcknowledgedIdsForKey(modalKey),
+    },
+  }
+
+  await persistCurrentGameState()
 }
 
 async function letDetectivesAct() {
@@ -2111,28 +2166,14 @@ onBeforeUnmount(() => {
         </template>
 
         <template v-else-if="isGameMasterTypingComplete && isDetectiveWaitingScreenOpen">
-          <article class="selected-target-card">
-            <p class="eyebrow">Your selection</p>
-            <span v-if="localDetectiveSelectedPlayer" class="selected-target-icon">
-              {{ getPlayerIcon(localDetectiveSelectedPlayer) }}
-            </span>
-            <h3>
-              You selected {{ localDetectiveSelectedPlayer?.name ?? 'a player' }}.
-            </h3>
-            <p v-if="!isDetectiveInvestigationResolved">
-              Waiting for your partner to choose a player to investigate.
-            </p>
-            <p v-else>
-              Your partner has finished choosing. Proceed to hear the Game Master's result.
-            </p>
-          </article>
           <button
             v-if="isDetectiveInvestigationResolved"
             type="button"
             class="secondary-button"
+            :disabled="hasLocalProceededToDetectiveResult"
             @click="proceedToDetectiveResult"
           >
-            Proceed
+            Proceed {{ detectiveProceedAcknowledgedCount }}/{{ nextRequiredCount }}
           </button>
         </template>
 
