@@ -2,7 +2,8 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { GameState, Player, PlayerKind } from '../game/types'
 import { supabase } from './supabase'
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000'
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+const apiBaseUrl = configuredApiBaseUrl ?? (import.meta.env.PROD ? '' : 'http://127.0.0.1:3000')
 
 interface LobbyRow {
   code: string
