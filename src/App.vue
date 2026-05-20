@@ -1461,7 +1461,6 @@ function scheduleBotDiscussion() {
   }
 
   if (
-    !canRunAutomatedGameAction.value ||
     gameState.value.phase !== 'discussion' ||
     currentDiscussionSpeaker.value?.kind !== 'ai'
   ) {
